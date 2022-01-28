@@ -1,0 +1,41 @@
+{
+  "name": "sandbox-server",
+  "description": "Run marko application in sandbox with razzle",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "razzle start",
+    "build": "yarn install && razzle build --noninteractive",
+    "test": "razzle test --env=jsdom",
+    "start:prod": "NODE_ENV=production node build/server.js"
+  },
+  "dependencies": {
+    "@marko/express": "^1.0.0",
+    "all-localstorage": "^1.0.1",
+    "compression": "^1.7.4",
+    "express": "^4.17.1",
+    "jquery": "^3.6.0",
+    "marko": "^5.17.2",
+    "markojs-shared-state": "^0.3.0",
+    "razzle": "4.1.0",
+    "sass": "^1.39.2",
+    "sass-loader": "^12.1.0"
+  },
+  "devDependencies": {
+    "@marko/webpack": "^6.2.9",
+    "babel-preset-razzle": "4.1.0",
+    "html-webpack-plugin": "^5.3.2",
+    "mini-css-extract-plugin": "^2.2.0",
+    "postcss-preset-env": "^6.7.0",
+    "razzle-dev-utils": "4.1.0",
+    "webpack": "^5.50.0",
+    "webpack-dev-server": "^3.11.2"
+  },
+  "main": "src/index",
+  "author": "Fabrice Marlboro",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/multipple/marko-sandbox.git"
+  },
+  "license": "MIT"
+}

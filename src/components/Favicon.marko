@@ -1,0 +1,20 @@
+
+$ {
+  const 
+  { type, name, description, namespace, nsi, version, favicon } = input,
+  src = `~/${favicon}`,
+  title = input.title == 'name' ? name : description
+}
+
+<if( /\.(png|jpe?g|gif|webp|svg)/.test( src ) )>
+  <img src=src
+        width=(input.width || 60)
+        alt=name
+        class=input.class
+        title=title/><br>
+</if>
+<else>
+  <span title=description >
+    <Bx type="extension" class=input.class/>
+  </span>
+</else>

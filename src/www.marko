@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang=input.lang>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui"/>
+    <title>${input.title}</title>
+    <link rel="apple-touch-icon" href="/images/logo/favicon.png">
+    <link rel="shortcut icon" type="image/x-icon" href="/images/logo/favicon.png">
+    <if( Array.isArray( input.Assets.client.css ) )>
+      <for|href| of=input.Assets.client.css>
+        <link rel="stylesheet" href=href>
+      </for>
+    </if>
+  </head>
+  <body>
+    <if( Array.isArray( input.Assets.client.js ) )>
+      <for|src| of=input.Assets.client.js>
+        <script src=src crossorigin=( process.env.NODE_ENV === 'production' ) defer></script>
+      </for>
+    </if>
+  </body>
+</html>

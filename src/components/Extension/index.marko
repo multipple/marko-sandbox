@@ -1,0 +1,168 @@
+
+import * as Plugin from './Plugin'
+import * as Application from './MicroApp'
+
+class {
+  onCreate( input ){
+    this.state = {
+      loaded: false, 
+      errmess: false, 
+      updateSignal: false 
+    }
+    
+    this.extension = null
+    this.Manager = null
+    this.uid = input.id || input.umi
+    
+    GState.bind( this, [ this.uid, 'tenant', 'user', 'theme', 'workspace', 'screen' ] )
+    
+    this.fetchComponent( this.exactInput( input ) )
+  }
+  onInput( input ){ this.input = this.exactInput( input ) }
+  onEmit( ...args ){
+    this.emit( ...args )
+    this.emit('forward', ...args )
+    
+    console.log('Output Event: ', ...args )
+  }
+
+  exactInput( input ){
+    const metaset = input.name && !input.nsi ? 
+                                        { ...input, ...( window.Extensions.meta( input.name ) ) } 
+                                        : input
+                                        
+    return metaset && metaset.nsi ? metaset : null
+  }
+  allowedScope( target ){
+    
+    if( !this.input.configs
+        || !this.input.configs.permissions 
+        || !Array.isArray( this.input.configs.permissions.scope )
+        || !this.input.configs.permissions.scope.length ) return {}
+
+    const scopeData = {}
+    let targetData = {}
+
+    switch( target ){
+      case 'user': targetData = this.state.user; break
+      case 'tenant': targetData = this.state.tenant; break
+    }
+
+    function assignValue( link, holder, receiver = {} ){
+      
+      const
+      nsp = link.split('.'),
+      toCheck = nsp.shift()
+
+      /* Receiver requesting all data fields contain in the holder
+      
+        TEMPORARY: Later give a censor list of primary
+                    level of fields that can be assign
+                    in bulk
+      */
+      if( toCheck == '*' ){
+        Object.assign( receiver, holder )
+        return
+      }
+    
+      if( typeof holder == 'object' && !holder.hasOwnProperty( toCheck ) )
+        return false
+    
+      if( typeof holder[ toCheck ] == 'object' && nsp.length ){
+        holder = holder[ toCheck ]
+        receiver[ toCheck ] = {}
+    
+        return assignValue( nsp.join('.'), holder, receiver[ toCheck ] )
+      }
+      
+      receiver[ toCheck ] = holder[ toCheck ]
+    }
+    
+    this.input.configs.permissions.scope.map( ({ type, access }) => {
+      // Assign granted permission data
+      if( access == 'GRANTED' )
+        assignValue( type.replace(/^[a-zA-Z0-9]+\./, ''), targetData, scopeData )
+
+      /* TODO: Collect the list of mandatory permission
+              to re-ask for
+      */
+      // if( access == 'MANDATORY' )
+      //   assignValue( type.replace(/^[a-zA-Z0-9]+\./, ''), targetData, scopeData )
+    } )
+    
+    return scopeData
+  }
+
+  refresh(){ window.Extensions.list[ this.input.name ].refresh() }
+  quit(){
+    this.input.type == 'application' && this.destroy() // Auto-close when it's a micro-app
+    this.onEmit('quit')
+  }
+  
+  async fetchComponent( input ){
+    
+    if( !input ) return
+
+    //this.state.loaded = false
+    try {
+      // Get extension path by account type configuration
+      const 
+      { type, nsi, runscript, version, namespace } = input,
+      accountType = this.state.user.accounttype.toLowerCase(),
+      // Path of the component to load as main package: Default is `index.marko`
+      path = runscript
+              && ( ( runscript['*'] && runscript['*'].main ) // Main component for all account
+                    || ( runscript[ accountType ] && runscript[ accountType ].main ) ) // Main component for specific account type
+      
+      // Fetch Marko template targeting available version
+      this.extension = await import(`~`)
+      
+      // Initialize extension manager
+      this.Manager = type == 'application' ? new Application.Manager( this ) : new Plugin.Manager( this )
+
+      this.state.loaded = true
+    }
+    catch( error ){
+      console.log( error )
+      this.state.errmess = error.message
+    }
+  }
+}
+
+<if( !state.errmess )>
+  <!-- Extension loading stage -->
+  <if( state.loaded === false )>
+    <Loading ...input/>
+  </if>
+  <else-if( component.extension )>
+    <!-- Render the extension -->
+    $ {
+      // Assign all extension infos to itself as `meta`
+      const meta = newObject( input )
+      delete meta.payload
+    }
+    
+    <${component.extension} meta=meta
+                            payload=(state[ component.uid ] || input.payload)
+                            theme=state.theme
+                            screen=state.screen
+                            mode=state.workspace.mode
+                            context=state.workspace.context
+                            updateSignal=state.updateSignal
+                            user=component.allowedScope('user')
+                            tenant=component.allowedScope('tenant')
+                            Declare=( component.Manager && component.Manager.bind )/>
+  </else-if>
+</if>
+<else>
+  <!-- Error encounted when loading extension -->
+  <div class="h-100 d-flex align-items-center">
+    <div class="w-100 text-center" key="error-block">
+      <i class="bx bx-error font-large-3" style="color:inherit"></i>
+      <br><br>
+      <p style="padding:0 10%">
+        Oops! ${state.errmess}
+      </p>
+    </div>
+  </div>
+</else>

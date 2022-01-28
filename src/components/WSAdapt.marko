@@ -1,0 +1,36 @@
+
+class {
+  onCreate( input ){
+    this.state = { wsClass: '', previousMode: '' }
+    this.uidx = 'ws-'+ random(0, 10000)
+
+    GState.bind( this, ['workspace'] )
+    this.adaptView( input )
+  }
+  onUpdate(){ this.adaptView( this.input ) }
+
+  adaptView( input ){
+    
+    if( this.state.workspace.mode == this.state.previousMode
+        && this.state.wsClass == input[ this.state.workspace.mode ] )
+      return
+    
+    switch( this.state.workspace.mode ){
+      case 'fs': this.state.wsClass = input.fs; break
+      case 'hs': this.state.wsClass = input.hs; break
+      case 'qs': this.state.wsClass = input.qs; break
+      case 'ns':
+      default: this.state.wsClass = input.ns
+    }
+
+    this.state.previousMode = this.state.workspace.mode
+  }
+}
+
+<div key=component.uidx
+      id=input.id
+      class=`${input.class || '' } ${state.wsClass} ws--${state.previousMode}`
+      style=input.style
+      on-click( () => component.emit('click') )>
+  <${input.renderBody}/>
+</div>
