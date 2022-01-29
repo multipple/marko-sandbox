@@ -1,0 +1,40 @@
+
+<!-- StyleSheets -->
+<!-- import 'boxicons/css/boxicons.min.css' -->
+import '#/css/bootstrap.css'
+import '#/css/bootstrap-extended.css'
+import '#/css/colors.css'
+import '#/css/components.css'
+import '#/css/style.helper.css'
+import '#/css/animate.css'
+
+<!-- import './theme/custom.scss'
+import './theme/light.scss'
+import './theme/dark.scss' -->
+
+<!-- JS Scripts -->
+<!-- import '#/js/bootstrap.min' -->
+
+class {
+  onCreate(){
+    GState.bind(this, ['theme'])
+    !this.state.theme && this.adaptiveThemeMode()
+  }
+  adaptiveThemeMode(){
+    // Check user OS X & Browser preference
+    const themeMedia = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)')
+    if( !themeMedia )
+      return GState.set('theme', 'light') // Force `light` to `auto`
+    
+    // Dark mode as preference check point
+    GState.set('theme', themeMedia.matches ? 'dark' : 'light' )
+    // Monitor platform (OS) theme preference change
+    themeMedia.addEventListener( 'change', e => GState.set('theme', e.matches ? 'dark' : 'light' ) )
+  }
+}
+
+<div class=`th--${state.theme.mode}`>
+  <Extension name=input.name/>
+
+  <div>Controll Bar</div>
+</div>

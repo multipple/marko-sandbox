@@ -2,13 +2,12 @@
 import express from 'express'
 import compressionMiddleware from 'compression'
 import markoMiddleware from '@marko/express'
-import www from './www.marko'
+import www from './views/www.marko'
 
 const 
 port = parseInt( 33000, 10 ),
 app = express()
 .use( compressionMiddleware() ) // Enable gzip compression for all HTTP responses.
-.use( '/assets', express.static('dist/assets') ) // Serve assets generated from webpack.
 .use( markoMiddleware() ) // Enables res.marko.
 
 /*-------------------------------------------------------------------*/

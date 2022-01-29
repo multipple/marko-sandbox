@@ -1,15 +1,16 @@
 
 import './utils'
 import { loadExt } from './lib/ExtensionManager'
-import Box from './box'
 import Locales from '~/locales/manifest.json'
+import Config from '~/../config.json'
+import Views from './views'
 
 ;( async () => {
   // Dummy data
   const
   accountType = 'Admin',
   tenant = {
-
+    name: 'Test Tenant'
   },
   userData = {
 		accounttype: accountType,
@@ -175,7 +176,6 @@ import Locales from '~/locales/manifest.json'
   await loadExt( accountType )
 
   /*----------------------------------------------------------------*/
-	// Render UI
-	Box.renderSync({})
-			.prependTo( document.body )
+	// Render UI Views
+	Views.renderSync( Config ).prependTo( document.body )
 } )()

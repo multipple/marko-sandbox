@@ -15,14 +15,14 @@
     "compression": "^1.7.4",
     "express": "^4.17.1",
     "jquery": "^3.6.0",
-    "marko": "^5.17.2",
+    "marko": "4.23.17",
     "markojs-shared-state": "^0.3.0",
     "razzle": "4.1.0",
-    "sass": "^1.39.2",
-    "sass-loader": "^12.1.0"
+    "sass": "^1.49.0",
+    "sass-loader": "^12.4.0"
   },
   "devDependencies": {
-    "@marko/webpack": "^6.2.9",
+    "@marko/webpack": "6.2.9",
     "babel-preset-razzle": "4.1.0",
     "html-webpack-plugin": "^5.3.2",
     "mini-css-extract-plugin": "^2.2.0",

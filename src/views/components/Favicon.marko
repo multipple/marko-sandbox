@@ -1,13 +1,14 @@
 
+import Favicon from '~/../favicon.png'
+
 $ {
   const 
-  { type, name, description, namespace, nsi, version, favicon } = input,
-  src = `~/${favicon}`,
+  { type, name, description, favicon } = input,
   title = input.title == 'name' ? name : description
 }
 
-<if( /\.(png|jpe?g|gif|webp|svg)/.test( src ) )>
-  <img src=src
+<if( Favicon )>
+  <img src=Favicon
         width=(input.width || 60)
         alt=name
         class=input.class

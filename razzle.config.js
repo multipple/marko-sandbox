@@ -21,15 +21,10 @@ module.exports = {
     webpackConfig.resolve.extensions = [ ...webpackConfig.resolve.extensions, '.css', '.scss', '.marko' ]
     webpackConfig.resolve.alias = {
       ...webpackConfig.resolve.alias,
+      ['#']: path.resolve(__dirname, './src/views/assets'),
       ['~']: path.resolve(__dirname, './../src')
     }
-    // webpackConfig.resolve.fallback = { 
-    //   ...webpackConfig.resolve.fallback,
-    //   assert: require.resolve('assert'),
-    //   stream: require.resolve('stream-browserify'),
-    //   crypto: require.resolve('crypto-browserify')
-    // }
-
+    
     webpackConfig.module.rules.push({
       test: /\.marko$/,
       loader: require.resolve('@marko/webpack/loader')
