@@ -1,4 +1,5 @@
 
+// import helmet from 'helmet'
 import express from 'express'
 import compressionMiddleware from 'compression'
 import markoMiddleware from '@marko/express'
@@ -7,6 +8,10 @@ import www from './views/www.marko'
 const 
 port = parseInt( 33000, 10 ),
 app = express()
+// .use( helmet({ 
+//   contentSecurityPolicy: false,
+//   crossOriginEmbedderPolicy: false
+// }) )
 .use( compressionMiddleware() ) // Enable gzip compression for all HTTP responses.
 .use( markoMiddleware() ) // Enables res.marko.
 

@@ -14,6 +14,8 @@
     "all-localstorage": "^1.0.1",
     "compression": "^1.7.4",
     "express": "^4.17.1",
+    "helmet": "^5.0.2",
+    "iframe.io": "^0.0.5",
     "jquery": "^3.6.0",
     "marko": "4.23.17",
     "markojs-shared-state": "^0.3.0",

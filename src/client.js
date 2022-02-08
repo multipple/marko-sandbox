@@ -1,5 +1,6 @@
 
 import './utils'
+import IOF from 'iframe.io'
 import { loadExt } from './lib/ExtensionManager'
 import Locales from '~/locales/manifest.json'
 import Config from '~/../config.json'
@@ -149,27 +150,12 @@ import Views from './views'
   .action( 'switch', async locale => await initLocale( locale ) )
 
   /*----------------------------------------------------------------*/
-  // Initial media window sizes
-  function initScreenSet( e ){
+  // Initial connection with content window
+  const iof = new IOF({ debug: true })
 
-    const
-    $window =  $( e && e.target ? this : document ),
-    width = $window.width(),
-    height = $window.height()
-
-    let media = 'xs'
-
-    if( width >= 576 ) media = 'sm'
-    if( width >= 768 ) media = 'md'
-    if( width >= 992 ) media = 'lg'
-    if( width >= 1200 ) media = 'xl'
-    
-    GState.set( 'screen', { media, width, height } )
-  }
-
-  initScreenSet()
-  // Watch screen resize for responsiveness updates
-  $(window).on( 'resize', initScreenSet )
+  iof.listen()
+  iof.on( 'ws:change', data => GState.workspace.layout( data ) )
+  iof.on( 'screen:change', data => GState.set( 'screen', data ) )
 
   /*----------------------------------------------------------------*/
   // Load installed Extensions
