@@ -19,7 +19,7 @@ import Views from './views'
   },
   Theme = {
     name: 'smoothy~1.0',
-    mode: 'dark',
+    mode: 'light',
     color: 'default'
   }
 
@@ -162,12 +162,14 @@ import Views from './views'
 
   /*----------------------------------------------------------------*/
   // Initial connection with content window
-  const iof = new IOF({ debug: true })
+  window.iof = new IOF({ debug: true })
 
   iof.listen()
   iof.on( 'theme:change', data => GState.set( 'theme', data ) )
   iof.on( 'ws:change', data => GState.workspace.layout( data ) )
   iof.on( 'screen:change', data => GState.set( 'screen', data ) )
+  iof.on( 'locale:change', data => GState.locale.switch( data ) )
+  iof.on( 'signal', code => GState.extension.signal( Config.nsi, code ) )
 
   /*----------------------------------------------------------------*/
   // Load installed Extensions

@@ -6,7 +6,7 @@ function Instance( ___, $ ){
   
   const
   plugin = this,
-  extensionId = $.uid,
+  extensionId = $.nsi,
 
   Features = {
 

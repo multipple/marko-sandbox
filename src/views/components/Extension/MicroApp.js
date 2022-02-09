@@ -1,12 +1,13 @@
 
 import Storage from 'all-localstorage'
+import { fn } from 'jquery'
 import SharedState from 'markojs-shared-state'
 
 function Instance( ___, $ ){
   
   const
   app = this,
-  extensionId = $.uid,
+  extensionId = $.nsi,
 
   Features = {
 
@@ -208,6 +209,14 @@ function Instance( ___, $ ){
   
   // Emit signal to refresh app configs & component
   this.refresh = () => $.refresh()
+
+  // App listening to core system signals
+  this.signal = listener => {
+    if( typeof listener !== 'function' )
+      throw new Error('Expect signal <function> listener. Got '+ typeof listener )
+
+    GState.on( 'extension:signal', ({ appId, code }) => appId == extensionId && listener( code ) )
+  }
 
   // Pass static data to the app that can be share with any sub-component that extend it
   this.data = {}

@@ -75,6 +75,9 @@ function quitExt( id ){
   // Is not active
   if( !actives.hasOwnProperty( id ) ) return
 
+  // Send quit signal to the application
+  GState.extension.signal( id, 'USER:QUIT' )
+
   delete actives[ id ]
   GState.set( 'activeExtensions', actives )
   uiStore.set( storeAttr, actives )
@@ -160,6 +163,7 @@ GState
 .define('extension')
 .action( 'open', runExt )
 .action( 'close', quitExt )
+.action( 'signal', ( appId, code ) => GState.set( 'extension:signal', { appId, code } ) )
 
 // Ask for data or hook access permissions
 GState

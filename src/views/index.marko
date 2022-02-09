@@ -28,9 +28,9 @@ class {
 
     GState.on( 'theme', async theme => {
       const { name, color, mode } = theme
-      if( currentTheme 
-          && currentTheme.name === name 
-          && currentTheme.color != color ) return
+      if( this.currentTheme 
+          && this.currentTheme.name === name 
+          && this.currentTheme.color != color ) return
 
       await apply( name, color )
 
@@ -56,5 +56,7 @@ class {
 }
 
 <div class=`th--${state.theme.mode}`>
-  <Extension name=input.name/>
+  <div.vw-100.vh-100.theme-bg.overflow-auto>
+    <Extension name=input.name/>
+  </div>
 </div>

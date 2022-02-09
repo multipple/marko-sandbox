@@ -10,7 +10,7 @@ class {
       currentLanguage: 'en-US'
     }
     
-    this.uid = input.id || input.umi
+    this.nsi = input.id || input.nsi
     this.extension = null
     this.directory = null
 
@@ -18,7 +18,7 @@ class {
     this.LanguageManifest = null
     this.LanguageDictionary = null
     
-    GState.bind( this, [ this.uid, 'tenant', 'user', 'theme', 'workspace', 'screen', 'locale' ] )
+    GState.bind( this, [ this.nsi, 'tenant', 'user', 'theme', 'workspace', 'screen', 'locale' ] )
     
     this.fetchComponent( this.exactInput( input ) )
   }
@@ -175,6 +175,9 @@ class {
       this.extension = await import(`root/${this.directory}`)
       // Load defined locale language translation manifest.json file
       this.LanguageManifest = require(`root/${this.directory}locales/manifest.json`)
+      // Send language manifest to emulator
+      window.iof.off('get:languages') // Remove previous listener
+      window.iof.on( 'get:languages', fn => typeof fn == 'function' && fn( false, this.LanguageManifest ) )
       
       // Initialize extension manager
       this.Manager = type == 'application' ? new Application.Manager( this ) : new Plugin.Manager( this )
@@ -230,7 +233,7 @@ class {
     <context locale=state.locale
               RenderLocale=component.RenderLocale.bind( component )>
       <${component.extension} meta=meta
-                              payload=(state[ component.uid ] || input.payload)
+                              payload=(state[ component.nsi ] || input.payload)
                               theme=state.theme
                               screen=state.screen
                               mode=state.workspace.mode
