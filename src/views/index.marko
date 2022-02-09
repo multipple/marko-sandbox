@@ -1,41 +1,60 @@
 
 <!-- StyleSheets -->
 <!-- import 'boxicons/css/boxicons.min.css' -->
-import '#/css/bootstrap.css'
-import '#/css/bootstrap-extended.css'
-import '#/css/colors.css'
-import '#/css/components.css'
-import '#/css/style.helper.css'
-import '#/css/animate.css'
-
-<!-- JS Scripts -->
-<!-- import '#/js/bootstrap.min' -->
+import '~/css/bootstrap.css'
+import '~/css/bootstrap-extended.css'
+import '~/css/colors.css'
+import '~/css/components.css'
+import '~/css/style.helper.css'
+import '~/css/animate.css'
 
 class {
-  async onCreate(){
+  onCreate(){
     GState.bind(this, ['theme'])
-    !this.state.theme && this.adaptiveThemeMode()
+    
+    this.adaptiveThemeType()
+    this.adaptiveThemeMode()
+  }
+  adaptiveThemeType(){
+    // Apply change of theme type (smoothy~1.0) or theme color
+    async function apply( name, color ){
+      await import(`themes/${name}/theme/${color}/light`)
+      await import(`themes/${name}/theme/${color}/dark`)
+    }
 
-    // Import side effects theme Styles
-    const { name, color } = this.state.theme
-    await import(`#/themes/${name}/theme/${color}/light`)
-    await import(`#/themes/${name}/theme/${color}/dark`)
+    // Initialized
+    this.currentTheme = this.state.theme
+    this.currentTheme && apply( this.currentTheme.name, this.currentTheme.color )
+
+    GState.on( 'theme', async theme => {
+      const { name, color, mode } = theme
+      if( currentTheme 
+          && currentTheme.name === name 
+          && currentTheme.color != color ) return
+
+      await apply( name, color )
+
+      this.currentTheme = theme
+    } )
   }
   adaptiveThemeMode(){
     // Check user OS X & Browser preference
     const themeMedia = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)')
-    if( !themeMedia )
-      return GState.theme.mode('light') // Force `light` to `auto`
-    
-    // Dark mode as preference check point
-    GState.theme.mode( themeMedia.matches ? 'dark' : 'light' )
+
+    if( !this.state.theme ){
+      // Adapt theme mode to browser
+      if( !themeMedia )
+        return GState.theme.mode('light') // Force `light` to `auto`
+      
+      // Dark mode as preference check point
+      GState.theme.mode( themeMedia.matches ? 'dark' : 'light' )
+    }
+
     // Monitor platform (OS) theme preference change
-    themeMedia.addEventListener( 'change', e => GState.theme.mode( e.matches ? 'dark' : 'light' ) )
+    themeMedia.addEventListener( 'change', e => !this.state.theme && GState.theme.mode( e.matches ? 'dark' : 'light' ) )
   }
 }
 
 <div class=`th--${state.theme.mode}`>
   <Extension name=input.name/>
-
-  <div.control-bar></div>
 </div>

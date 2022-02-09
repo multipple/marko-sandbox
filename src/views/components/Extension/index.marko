@@ -172,9 +172,9 @@ class {
       this.directory = ''
       
       // Fetch Marko template targeting available version
-      this.extension = await import(`~/${this.directory}`)
+      this.extension = await import(`root/${this.directory}`)
       // Load defined locale language translation manifest.json file
-      this.LanguageManifest = require(`~/${this.directory}locales/manifest.json`)
+      this.LanguageManifest = require(`root/${this.directory}locales/manifest.json`)
       
       // Initialize extension manager
       this.Manager = type == 'application' ? new Application.Manager( this ) : new Plugin.Manager( this )
@@ -203,7 +203,7 @@ class {
       if( !locale ) 
         throw new Error(`${locale} language dictionary not found`)
 
-      this.LanguageDictionary = await import(`~/${this.directory}locales/${locale.dictionary}`)
+      this.LanguageDictionary = await import(`root/${this.directory}locales/${locale.dictionary}`)
       
       this.state.errmess = false
       this.state.currentLanguage = currentLanguage

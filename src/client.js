@@ -2,8 +2,8 @@
 import './utils'
 import IOF from 'iframe.io'
 import { loadExt } from './lib/ExtensionManager'
-import Locales from '~/locales/manifest.json'
-import Config from '~/../config.json'
+import Locales from 'root/locales/manifest.json'
+import Config from 'root/../config.json'
 import Views from './views'
 
 ;( async () => {
@@ -97,7 +97,7 @@ import Views from './views'
         if( !locale ) 
           return reject('${locale} language dictionary not found')
 
-        const dictionary = require(`~/locales/${locale.dictionary}`)
+        const dictionary = require(`root/locales/${locale.dictionary}`)
         GState.set( 'locale', { language, variant, dictionary } )
         resolve()
       }
@@ -165,6 +165,7 @@ import Views from './views'
   const iof = new IOF({ debug: true })
 
   iof.listen()
+  iof.on( 'theme:change', data => GState.set( 'theme', data ) )
   iof.on( 'ws:change', data => GState.workspace.layout( data ) )
   iof.on( 'screen:change', data => GState.set( 'screen', data ) )
 

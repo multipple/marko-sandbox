@@ -52,8 +52,9 @@ module.exports = {
     webpackConfig.resolve.extensions = [ ...webpackConfig.resolve.extensions, '.css', '.scss', '.marko' ]
     webpackConfig.resolve.alias = {
       ...webpackConfig.resolve.alias,
-      ['#']: path.resolve(__dirname, 'src/views/assets'),
-      ['~']: path.resolve(__dirname, '../src')
+      'themes': path.resolve(__dirname, 'src/views/themes'),
+      'root': path.resolve(__dirname, '../src'),
+      ['~']: path.resolve(__dirname, 'src/views/assets'),
     }
 
     webpackConfig.plugins.push(new MiniCssExtractPlugin())

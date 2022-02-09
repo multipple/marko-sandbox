@@ -382,7 +382,7 @@ export const loadExt = async accountType => {
 
 export const getExt = async id => {
   // Get an installed extension info
-  try { return require('~/../config.json') }
+  try { return require('root/../config.json') }
   catch( error ){
     console.log('Failed Retreiving an Extension: ', error )
     return
@@ -391,7 +391,7 @@ export const getExt = async id => {
 
 export const fetchExt = async query => {
   // Fetch all installed extension or query a specific category
-  try { return [ require('~/../config.json') ] }
+  try { return [ require('root/../config.json') ] }
   catch( error ){
     console.log('Failed Fetching Extensions: ', error )
     return []
