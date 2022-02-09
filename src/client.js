@@ -19,12 +19,23 @@ import Views from './views'
   },
   Theme = {
     name: 'smoothy~1.0',
-    mode: 'light'
+    mode: 'dark',
+    color: 'default'
   }
 
   /*----------------------------------------------------------------*/
   // Initial States
   GState.set( 'theme', Theme )
+  GState
+  .define('theme')
+  .action( 'mode', value => {
+
+    let theme = GState.get('theme')
+    theme = { ...theme, mode: value }
+
+    GState.dirty( 'theme', theme )
+  } )
+
   GState.set( 'tenant', tenant )
   GState.set( 'user', userData )
   GState.set( 'locales', Locales || {} )
@@ -143,7 +154,7 @@ import Views from './views'
     // Fetch en-US dictionary by default
     await initLocale('en-US')
   }
-
+  
   // Language Switcher
   GState
   .define('locale')

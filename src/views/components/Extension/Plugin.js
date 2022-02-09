@@ -10,8 +10,13 @@ function Instance( ___, $ ){
 
   Features = {
 
+    // Localstorage support
     UIStore: new Storage({ prefix: extensionId, encrypt: true }),
 
+    // Activate locale language support
+    Locale: ( async () => await $.loadLocaleDictionary( true ) )(),
+
+    // Global state in-plugin support
     State: ( () => {
       const 
       ss = SharedState(),
@@ -35,8 +40,8 @@ function Instance( ___, $ ){
       return _state
     } )(),
 
+    // API request handler
     Request: async ( url, options ) => {
-      
       return new Promise( ( resolve, reject ) => {
 
         const 

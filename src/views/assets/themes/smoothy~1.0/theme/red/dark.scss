@@ -1,0 +1,2 @@
+// Generate dark theme styles
+@use '../index' with ( $theme: dark, $primary-color: #c62904 );

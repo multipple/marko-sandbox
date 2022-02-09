@@ -6,19 +6,30 @@ class {
   onCreate( input ){
     this.state = {
       loaded: false, 
-      errmess: false, 
-      updateSignal: false 
+      errmess: false,
+      currentLanguage: 'en-US'
     }
     
-    this.extension = null
-    this.Manager = null
     this.uid = input.id || input.umi
+    this.extension = null
+    this.directory = null
+
+    this.Manager = null
+    this.LanguageManifest = null
+    this.LanguageDictionary = null
     
-    GState.bind( this, [ this.uid, 'tenant', 'user', 'theme', 'workspace', 'screen' ] )
+    GState.bind( this, [ this.uid, 'tenant', 'user', 'theme', 'workspace', 'screen', 'locale' ] )
     
     this.fetchComponent( this.exactInput( input ) )
   }
   onInput( input ){ this.input = this.exactInput( input ) }
+  onMount(){
+    // Load the dictionnary of the new language
+    GState.on( 'locale', async ({ language, variant }) => {
+      if( ( language +'-'+ variant ) === this.state.currentLanguage ) return
+      await this.loadLocaleDictionary()
+    } )
+  }
   onEmit( ...args ){
     this.emit( ...args )
     this.emit('forward', ...args )
@@ -98,24 +109,72 @@ class {
     this.input.type == 'application' && this.destroy() // Auto-close when it's a micro-app
     this.onEmit('quit')
   }
+
+  RenderLocale( text ){
+    /* Static translation
+      {
+        ...
+        "User account": "Compte utilisateur",
+        ...
+      }
+    */
+    const [ language, variant ] = this.state.currentLanguage.split('-')
+    let translation = // Check dictionary provided by the extension
+                      ( this.LanguageDictionary && this.LanguageDictionary[ text ] )
+                      // Check in global dictionnary: Standard Words/Terms
+                      || ( this.state.locale && this.state.local.dictionary[ text ] )
+                      // Fallback to original text
+                      || text
+
+    /* Select defined variance
+      {
+        ...
+        "Buy now": {
+            "US": "Buy now",
+            "UK": "Purchase now",
+            "default": "US"
+        }
+        ...
+      }
+    */
+    if( typeof translation == 'object' ){
+      // Specified variant defined
+      if( variant
+          && translation.hasOwnProperty( variant ) )
+        translation = translation[ variant ]
+
+      // User default define variant
+      else {
+        const defaultVariant = translation['default']
+
+        translation = ( defaultVariant
+                        && translation[ defaultVariant ] )
+                      || text
+      }
+    }
+
+    return translation
+  }
   
   async fetchComponent( input ){
     
     if( !input ) return
-
-    //this.state.loaded = false
     try {
       // Get extension path by account type configuration
       const 
       { type, nsi, runscript, version, namespace } = input,
-      accountType = this.state.user.accounttype.toLowerCase(),
+      accountType = this.state.user.accounttype.toLowerCase()
       // Path of the component to load as main package: Default is `index.marko`
-      path = runscript
-              && ( ( runscript['*'] && runscript['*'].main ) // Main component for all account
-                    || ( runscript[ accountType ] && runscript[ accountType ].main ) ) // Main component for specific account type
+      
+      // this.directory = runscript
+      //                  && ( ( runscript['*'] && runscript['*'].main ) // Main component for all account
+      //                  || ( runscript[ accountType ] && runscript[ accountType ].main ) ) // Main component for specific account type
+      this.directory = ''
       
       // Fetch Marko template targeting available version
-      this.extension = await import(`~`)
+      this.extension = await import(`~/${this.directory}`)
+      // Load defined locale language translation manifest.json file
+      this.LanguageManifest = require(`~/${this.directory}locales/manifest.json`)
       
       // Initialize extension manager
       this.Manager = type == 'application' ? new Application.Manager( this ) : new Plugin.Manager( this )
@@ -126,6 +185,32 @@ class {
       console.log( error )
       this.state.errmess = error.message
     }
+  }
+  async loadLocaleDictionary( activate ){
+    // Load current locale language's provided Dictionary
+    if( !this.LanguageManifest ){
+      if( activate ) this.state.errmess = 'Locale languages manifest not found'
+      return
+    }
+
+    const 
+    currentLanguage = this.state.locale.language || this.state.currentLanguage,
+    [ language, variant ] = currentLanguage.split('-')
+
+    // Fetch another dictionary
+    try {
+      const locale = this.LanguageManifest[ language ]
+      if( !locale ) 
+        throw new Error(`${locale} language dictionary not found`)
+
+      this.LanguageDictionary = await import(`~/${this.directory}locales/${locale.dictionary}`)
+      
+      this.state.errmess = false
+      this.state.currentLanguage = currentLanguage
+    }
+    catch( error ){ this.state.errmess = error.message }
+
+    return this.RenderLocale
   }
 }
 
@@ -142,16 +227,18 @@ class {
       delete meta.payload
     }
     
-    <${component.extension} meta=meta
-                            payload=(state[ component.uid ] || input.payload)
-                            theme=state.theme
-                            screen=state.screen
-                            mode=state.workspace.mode
-                            context=state.workspace.context
-                            updateSignal=state.updateSignal
-                            user=component.allowedScope('user')
-                            tenant=component.allowedScope('tenant')
-                            Declare=( component.Manager && component.Manager.bind )/>
+    <context locale=state.locale
+              RenderLocale=component.RenderLocale.bind( component )>
+      <${component.extension} meta=meta
+                              payload=(state[ component.uid ] || input.payload)
+                              theme=state.theme
+                              screen=state.screen
+                              mode=state.workspace.mode
+                              context=state.workspace.context
+                              user=component.allowedScope('user')
+                              tenant=component.allowedScope('tenant')
+                              Declare=( component.Manager && component.Manager.bind )/>
+    </context>
   </else-if>
 </if>
 <else>

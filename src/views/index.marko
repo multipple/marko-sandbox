@@ -8,28 +8,29 @@ import '#/css/components.css'
 import '#/css/style.helper.css'
 import '#/css/animate.css'
 
-<!-- import './theme/custom.scss'
-import './theme/light.scss'
-import './theme/dark.scss' -->
-
 <!-- JS Scripts -->
 <!-- import '#/js/bootstrap.min' -->
 
 class {
-  onCreate(){
+  async onCreate(){
     GState.bind(this, ['theme'])
     !this.state.theme && this.adaptiveThemeMode()
+
+    // Import side effects theme Styles
+    const { name, color } = this.state.theme
+    await import(`#/themes/${name}/theme/${color}/light`)
+    await import(`#/themes/${name}/theme/${color}/dark`)
   }
   adaptiveThemeMode(){
     // Check user OS X & Browser preference
     const themeMedia = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)')
     if( !themeMedia )
-      return GState.set('theme', 'light') // Force `light` to `auto`
+      return GState.theme.mode('light') // Force `light` to `auto`
     
     // Dark mode as preference check point
-    GState.set('theme', themeMedia.matches ? 'dark' : 'light' )
+    GState.theme.mode( themeMedia.matches ? 'dark' : 'light' )
     // Monitor platform (OS) theme preference change
-    themeMedia.addEventListener( 'change', e => GState.set('theme', e.matches ? 'dark' : 'light' ) )
+    themeMedia.addEventListener( 'change', e => GState.theme.mode( e.matches ? 'dark' : 'light' ) )
   }
 }
 
