@@ -30,12 +30,6 @@ class {
       await this.loadLocaleDictionary()
     } )
   }
-  onEmit( ...args ){
-    this.emit( ...args )
-    this.emit('forward', ...args )
-    
-    console.log('Output Event: ', ...args )
-  }
 
   exactInput( input ){
     const metaset = input.name && !input.nsi ? 
@@ -104,12 +98,20 @@ class {
     return scopeData
   }
 
-  refresh(){ window.Extensions.list[ this.input.name ].refresh() }
-  quit(){
-    this.input.type == 'application' && this.destroy() // Auto-close when it's a micro-app
-    this.onEmit('quit')
+  Refresh(){ window.Extensions.list[ this.input.name ].refresh() }
+  Emit( ...args ){
+    this.emit( ...args )
+    this.emit('forward', ...args )
+    this.emit('test-event', ...args )
+    
+    console.log('Output Event: ', ...args )
   }
-
+  Debug( message, status ){
+    debugLog( `[${this.input.name}]`, message )
+    // Emit log to emulator
+    window.iof 
+    && window.iof.emit( 'console:log', { name: this.input.name, type: 'debug', message, status } )
+  }
   RenderLocale( text ){
     /* Static translation
       {
@@ -154,6 +156,10 @@ class {
     }
 
     return translation
+  }
+  Quit(){
+    this.input.type == 'application' && this.destroy() // Auto-close when it's a micro-app
+    this.Emit('quit')
   }
   
   async fetchComponent( input ){

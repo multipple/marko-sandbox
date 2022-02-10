@@ -121,10 +121,13 @@ function Instance( ___, $ ){
   this.getPlugin = type => { return ___.input.meta.plugins && ___.input.meta.plugins[ type ] }
 
   // Forward plugin `event` to Extension component handler
-  this.emit = ( ...args ) => $.onEmit( ...args )
+  this.emit = ( ...args ) => $.Emit( ...args )
 
   // Emit signal to Quit/Close plugin
-  this.quit = () => $.quit()
+  this.quit = () => $.Quit()
+
+  // Debug mode logs
+  this.debug = ( ...args ) => $.Debug( ...args )
 
   // Pass static data to the plugin that can be share with any sub-component that extend it
   this.data = {}

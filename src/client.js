@@ -1,6 +1,7 @@
 
 import './utils'
 import IOF from 'iframe.io'
+import TestManager from './lib/TestManager'
 import { loadExt } from './lib/ExtensionManager'
 import Locales from 'root/locales/manifest.json'
 import Config from 'root/../config.json'
@@ -78,7 +79,7 @@ import Views from './views'
   .action( 'context', newState => {
 
     const wsState = GState.get('workspace')
-    wsState.context = Object.assign( wsState.context || {}, newState, { accountType } )
+    wsState.context = { ...(wsState.context || {}), accountType, ...newState }
 
     GState.dirty( 'workspace', wsState )
   } )
@@ -165,11 +166,15 @@ import Views from './views'
   window.iof = new IOF({ debug: true })
 
   iof.listen()
-  iof.on( 'theme:change', data => GState.set( 'theme', data ) )
-  iof.on( 'ws:change', data => GState.workspace.layout( data ) )
-  iof.on( 'screen:change', data => GState.set( 'screen', data ) )
-  iof.on( 'locale:change', data => GState.locale.switch( data ) )
-  iof.on( 'signal', code => GState.extension.signal( Config.nsi, code ) )
+  .on( 'signal', code => GState.extension.signal( Config.nsi, code ) )
+
+  .on( 'theme:change', data => GState.set( 'theme', data ) )
+  .on( 'ws:change', data => GState.workspace.layout( data ) )
+  .on( 'screen:change', data => GState.set( 'screen', data ) )
+  .on( 'locale:change', data => GState.locale.switch( data ) )
+
+  .on( 'user:change', data => GState.set( 'user', { ...GState.get('user'), ...data } ) )
+  .on( 'context:change', data => GState.workspace.context( data ) )
 
   /*----------------------------------------------------------------*/
   // Load installed Extensions

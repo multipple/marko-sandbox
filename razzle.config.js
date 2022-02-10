@@ -53,6 +53,7 @@ module.exports = {
     webpackConfig.resolve.alias = {
       ...webpackConfig.resolve.alias,
       'themes': path.resolve(__dirname, 'src/views/themes'),
+      'test': path.resolve(__dirname, '../test'),
       'root': path.resolve(__dirname, '../src'),
       ['~']: path.resolve(__dirname, 'src/views/assets'),
     }

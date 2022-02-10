@@ -202,13 +202,16 @@ function Instance( ___, $ ){
   this.getPlugin = type => { return ___.input.meta.plugins && ___.input.meta.plugins[ type ] }
 
   // Forward app `event` to Extension wrapper's component
-  this.emit = ( ...args ) => $.onEmit( ...args )
+  this.emit = ( ...args ) => $.Emit( ...args )
 
   // Quit/Close app
-  this.quit = () => $.quit()
+  this.quit = () => $.Quit()
   
   // Emit signal to refresh app configs & component
-  this.refresh = () => $.refresh()
+  this.refresh = () => $.Refresh()
+
+  // Debug mode logs
+  this.debug = ( ...args ) => $.Debug( ...args )
 
   // App listening to core system signals
   this.signal = listener => {
