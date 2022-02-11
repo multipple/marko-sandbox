@@ -6,7 +6,7 @@ import markoMiddleware from '@marko/express'
 import www from './views/www.marko'
 
 const 
-port = parseInt( 33000, 10 ),
+port = parseInt( process.env.PORT || 33000, 10 ),
 app = express()
 // .use( helmet({ 
 //   contentSecurityPolicy: false,
