@@ -99,30 +99,37 @@ class {
     } )
     .on( 'test:run', async ( idList, fn ) => {
       // Run a bulk list of test sessions with tracking function callback
-      const trackingFn = typeof fn == 'function' ? fn : () => {}
+      fn = typeof fn == 'function' ? fn : () => {}
 
       if( !tm )
-        return trackingFn('No started test found')
+        return fn('No started test found')
       
       if( !Array.isArray( idList ) )
-        return trackingFn('Invalid session list')
+        return fn('Invalid session list')
       
       if( !idList.length )
-        return trackingFn('Cannot run empty session list')
+        return fn('Cannot run empty session list')
 
+      /* Running progress tracking are send by 
+        independant emits since `fn` argument is 
+        one time callable function
+      */
       for( let x in idList ){
         const id = idList[ x ]
         
         try {
-          trackingFn( false, id, 'RUNNING' )
-
+          window.iof.emit( 'test:progress', { id, status: 'RUNNING' } )
           // Start session
           await tm.run( id )
           // Send end session status
-          trackingFn( false, id, 'SUCCEED' )
+          window.iof.emit( 'test:progress', { id, status: 'SUCCEED' } )
         }
-        catch( error ){ trackingFn( error.message, id, 'FAILED' ) }
+        catch( error ){
+          window.iof.emit( 'test:progress', { id, status: 'FAILED', error: error.message } )
+        }
       }
+      
+      fn() // Test End
     } )
     .on( 'test:runall', () => tm && tm.runAll() )
   }

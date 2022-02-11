@@ -21,7 +21,7 @@ function TestSession( { __id, __input, description }, Manager ){
 
   this.expects = ( label, validator ) => {
     const valid = typeof validator == 'function' ? validator() : true
-    if( valid ) console.log('! ', label )
+    if( valid ) debugLog('! ', label )
 
     return this
   }
@@ -188,8 +188,8 @@ export default function Manager( options ){
         return reject(`Invalid operation. "${__id}" Session not found`)
       
       // Run test executor function
-      console.log(`--SESSION START--`)
-      console.log(`-## ${session.description}\n`)
+      debugLog(`--SESSION START--`)
+      debugLog(`-## ${session.description}\n`)
 
       let timeout = options 
                     && options.delay 
@@ -199,8 +199,7 @@ export default function Manager( options ){
         clearTimeout( timeout )
 
         delete this.ActiveSessions[ __id ]
-
-        console.log('--SESSION END--\n')
+        debugLog('--SESSION END--\n')
         resolve()
       } )
       
@@ -231,7 +230,7 @@ export default function Manager( options ){
       
       Function(`(function(test){${scripts}})(this)`).apply( this )
     }
-    catch( error ){ console.log('Error: ', error ) }
+    catch( error ){ debugLog('Error: ', error ) }
   }
 
   // Define interface that stream inputs from test triggerers to test handler

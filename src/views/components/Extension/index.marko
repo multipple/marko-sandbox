@@ -239,7 +239,8 @@ class {
     <context locale=state.locale
               RenderLocale=component.RenderLocale.bind( component )>
       <${component.extension} meta=meta
-                              payload=(state[ component.nsi ] || input.payload)
+                              action=(state[ component.nsi ] ? state[ component.nsi ].action : input.action)
+                              payload=(state[ component.nsi ] ? state[ component.nsi ].payload : input.payload)
                               theme=state.theme
                               screen=state.screen
                               mode=state.workspace.mode
