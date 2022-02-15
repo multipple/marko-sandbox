@@ -1,0 +1,43 @@
+{
+	"institutionId" : "MP-A59F-BF95",
+	"name" : "Master Class",
+	"description" : "All masterclass courses online put together in one place",
+	"logo" : "https://cdnv2.multipple.com/institution/Master Class-1639781795544.jpg",
+	"contacts" : {
+		"email" : "hello@masterclass.com",
+		"support" : null
+	},
+	"countries" : [
+		"Denmark"
+	],
+  "domain": "masterclass.multipple.com",
+	"domains" : {
+		"sub" : "masterclass",
+		"full" : "masterclass.multipple.com",
+		"custom" : "masterclass.com"
+	},
+  "namespace": "master-bbo2wrKwYpc",
+  "website" : "dff40346-384f-4077-be06-8355b3af47ee",
+	"settings" : {
+		"theme" : {
+			"color" : "black",
+			"fontSize" : "normal",
+			"name" : "smoothy~1.0",
+			"mode" : "light"
+		}
+	},
+	"subscription" : {
+
+	},
+	"departments" : {
+
+	},
+	"areas" : [
+		"Primary School",
+		"University",
+		"Research & Development"
+	],
+	"categories" : {
+
+	}
+}

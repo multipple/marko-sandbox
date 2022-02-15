@@ -1,0 +1,109 @@
+{
+  "email" : "gracia@mail.com",
+  "first_name" : "Polema",
+  "last_name" : "Gracia",
+  "password" : "$2a$10$4/IC0Ua.R4ZVHyZ.MG5MV.i3uj0LD.P.yr0AyF2B1MVsIFb4d6xf2",
+  "photo" : "https://ui-avatars.com/api/?name=B&background=FC35C1&size=150&color=ffffff&bold=true&length=1&font-size=0.6",
+  "country" : {
+    "continent_code" : "AF",
+    "continent_name" : "Africa",
+    "country_code" : "BF",
+    "country_name" : "Burkina Faso",
+    "region_code" : "03",
+    "region_name" : "Centre",
+    "city" : "Ouagadougou",
+    "zip" : null,
+    "latitude" : 12.364230155944824,
+    "longitude" : -1.5383399724960327,
+    "time_zone" : {
+      "id" : "Africa/Ouagadougou",
+      "current_time" : "2021-11-11T03:27:28+00:00",
+      "gmt_offset" : 0,
+      "code" : "GMT",
+      "is_daylight_saving" : false
+    },
+    "currency" : {
+      "code" : "XOF",
+      "name" : "CFA Franc BCEAO",
+      "plural" : "CFA francs BCEAO",
+      "symbol" : "CFA",
+      "symbol_native" : "CFA"
+    },
+    "connection" : {
+      "asn" : 25543,
+      "isp" : "Onatel/Fasonet S"
+    },
+    "geoname_id" : 2357048,
+    "capital" : "Ouagadougou",
+    "languages" : [
+      {
+        "code" : "fr",
+        "name" : "French",
+        "native" : "Français"
+      },
+      {
+        "code" : "ff",
+        "name" : "Peul",
+        "native" : "Fulfulde"
+      }
+    ],
+    "country_flag" : "https://assets.ipstack.com/flags/bf.svg",
+    "country_flag_emoji" : "<ç<ë",
+    "country_flag_emoji_unicode" : "U+1F1E7 U+1F1EB",
+    "calling_code" : "226",
+    "is_eu" : false
+  },
+  "accounttype": "ADMIN",
+  "types": [
+    "ADMIN",
+    "LEARNER"
+  ],
+  "role": "SUPER",
+  "settings" : {
+    "theme" : {
+      "mode" : "auto",
+      "font_size" : "normal"
+    },
+    "notification" : {
+      "push" : "fSFIjfk0A0ANSbdjKSK13Cb2UkLayxqIqMRx9TW4yokNnLoHLXcmrniDoxASggd0AUzsbLRxYEwKO8XVTCQjHW82",
+      "sms" : false,
+      "email" : false
+    },
+    "privacy" : {
+      "show_phone" : false,
+      "marketing_profile" : false
+    },
+    "language": "fr",
+    "currency" : {
+      "code" : "XOF",
+      "name" : "CFA Franc BCEAO",
+      "plural" : "CFA francs BCEAO",
+      "symbol" : "CFA",
+      "symbol_native" : "CFA"
+    }
+  },
+  
+  "admin" : {
+		"adminId" : "0bd5b5f8-80be-4239-89fc-2f05bad88e30",
+		"role" : "SUPER",
+		"departments" : [ ],
+		"status" : "active",
+		"added" : {
+			"at" : 1643245352583,
+			"by" : "self"
+		}
+	},
+	"learner" : {
+		"departments" : [ ],
+		"categories" : [ ],
+		"groups" : [ ],
+		"pinned" : [ ],
+		"assignments" : [ ],
+		"certificates" : [ ],
+		"badges" : [ ],
+		"paths" : [ ],
+		"chat" : {
+
+		}
+	}
+}

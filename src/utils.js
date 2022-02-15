@@ -1,6 +1,7 @@
 
 
 import jQuery from 'jquery'
+import TraceKit from 'tracekit'
 import SS from 'markojs-shared-state'
 import Storage from 'all-localstorage'
 
@@ -26,6 +27,38 @@ GState.define = shareState.defineAPI
 
 window.GState = GState
 
+/*--------------------------------------------------------------------------*/
+// Report error trace
+window.GTrace = {}
+TraceKit.remoteFetching = false
+window.GTrace.listen = fn => {
+
+  TraceKit.report.subscribe( error => {
+    const relevents = []
+
+    for( let x in error.stack ){
+      const { line, column, func, url } = error.stack[ x ]
+      let filename = url.split('/').pop()
+
+      if( filename.includes('client.js') )
+        break
+
+      const 
+      comp = filename.replace('.chunk.js', '').split('_'),
+      extension = comp.pop()
+      
+      relevents.push({ line, column, func, path: `${comp.join('/')}.${extension}` })
+    }
+
+    error.stack = relevents
+    typeof fn == 'function' && fn( error )
+  } )
+}
+window.GTrace.dispose = TraceKit.report.unsubscribe
+window.GTrace.throw = TraceKit.report
+
+/*--------------------------------------------------------------------------*/
+// Global methods
 
 window.isEmpty = entry => {
   // Test empty array or object

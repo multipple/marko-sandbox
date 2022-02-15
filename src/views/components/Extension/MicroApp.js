@@ -10,12 +10,8 @@ function Instance( ___, $ ){
   extensionId = $.nsi,
 
   Features = {
-
     // Localstorage support
     UIStore: new Storage({ prefix: extensionId, encrypt: true }),
-
-    // Activate locale language support
-    Locale: ( async () => await $.loadLocaleDictionary( true ) )(),
 
     // Global state in-app support
     State: ( () => {
@@ -180,13 +176,21 @@ function Instance( ___, $ ){
   // Extend app instance Features & Data to sub-components
   this.extend = ( component, deps ) => {
     // Confer existing static data of the main app component to extend components
-    component.App = ___.App
-    // Assign additional required features
-    deps && ___.App.use( deps )
+    component.App = new Instance( component, $ )
+    // Assign requested app Features to the component
+    component.App.use([ ...this.deps, ...(deps || []) ])
+    // Assign main app data
+    component.App.data = ___.App.data
+
     // Automatically bind apps's global state to this extended component
-    this.deps 
-    && this.deps.includes('State') 
-    && ___.App.State.bind( component, stateKeys )
+    this.deps.includes('State')
+    && component.App.State.bind( component, stateKeys )
+
+    /** Overwride debug method to be
+     * able to trace directly to this 
+     * component
+     */
+    component.App.debug = ( message, status ) => this.debug( message, status, component )
 
     return this
   }
@@ -211,7 +215,13 @@ function Instance( ___, $ ){
   this.refresh = () => $.Refresh()
 
   // Debug mode logs
-  this.debug = ( ...args ) => $.Debug( ...args )
+  this.debug = ( message, status, component ) => {
+    const
+    { name, version } = $.input,
+    trace = ( component || ___ ).___type.replace( new RegExp(`\/${name}\\$(([0-9]+)\.)+`, 'i'), '')
+
+    $.Debug( message, status, trace )
+  }
 
   // App listening to core system signals
   this.signal = listener => {

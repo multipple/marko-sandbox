@@ -1,31 +1,62 @@
 
 import './utils'
 import IOF from 'iframe.io'
-import TestManager from './lib/TestManager'
 import { loadExt } from './lib/ExtensionManager'
 import Locales from 'root/locales/manifest.json'
 import Config from 'root/../config.json'
 import Views from './views'
 
-;( async () => {
-  // Dummy data
-  const
-  accountType = 'Admin',
-  tenant = {
-    name: 'Test Tenant'
-  },
-  userData = {
-		accounttype: accountType,
-    language: 'fr-FR'
-  },
-  Theme = {
-    name: 'smoothy~1.0',
-    mode: 'light',
-    color: 'default'
-  }
+import Tenant from './data/tenant.json'
+import User from './data/user.json'
 
-  /*----------------------------------------------------------------*/
-  // Initial States
+
+const
+accountType = 'ADMIN',
+tenantData = {
+  ...Tenant,
+  // Overwriddens
+},
+userData = {
+  ...User,
+  // Overwriddens
+  accounttype: accountType,
+  language: 'en'
+},
+Theme = {
+  name: 'smoothy~1.0',
+  mode: 'light',
+  color: 'default'
+}
+
+function controlChannel(){
+  // Initial connection with content window
+  return new Promise( resolve => {
+    window.iof = new IOF({ debug: true })
+
+    iof.listen()
+    .on( 'signal', code => GState.extension.signal( Config.nsi, code ) )
+
+    .on( 'theme:change', data => GState.set( 'theme', data ) )
+    .on( 'ws:change', data => GState.workspace.layout( data ) )
+    .on( 'screen:change', data => GState.set( 'screen', data ) )
+    .on( 'locale:change', data => GState.locale.switch( data ) )
+
+    .on( 'user:change', data => GState.set( 'user', { ...GState.get('user'), ...data } ) )
+    .on( 'context:change', data => GState.workspace.context( data ) )
+
+    // Channel connection established
+    .on( 'connect', () => {
+      iof.emit('start')
+      resolve()
+    } )
+    
+    // Report error stack to emulator
+    GTrace.listen( error => iof.emit( 'console:log', { name: Config.name, type: 'error', error, status: 'danger' } ))
+  } )
+}
+
+async function initialStates(){
+  
   GState.set( 'theme', Theme )
   GState
   .define('theme')
@@ -37,7 +68,7 @@ import Views from './views'
     GState.dirty( 'theme', theme )
   } )
 
-  GState.set( 'tenant', tenant )
+  GState.set( 'tenant', tenantData )
   GState.set( 'user', userData )
   GState.set( 'locales', Locales || {} )
 
@@ -160,27 +191,20 @@ import Views from './views'
   GState
   .define('locale')
   .action( 'switch', async locale => await initLocale( locale ) )
+}
 
-  /*----------------------------------------------------------------*/
-  // Initial connection with content window
-  window.iof = new IOF({ debug: true })
-
-  iof.listen()
-  .on( 'signal', code => GState.extension.signal( Config.nsi, code ) )
-
-  .on( 'theme:change', data => GState.set( 'theme', data ) )
-  .on( 'ws:change', data => GState.workspace.layout( data ) )
-  .on( 'screen:change', data => GState.set( 'screen', data ) )
-  .on( 'locale:change', data => GState.locale.switch( data ) )
-
-  .on( 'user:change', data => GState.set( 'user', { ...GState.get('user'), ...data } ) )
-  .on( 'context:change', data => GState.workspace.context( data ) )
-
-  /*----------------------------------------------------------------*/
+async function run(){
   // Load installed Extensions
   await loadExt( accountType )
+  // Render UI Views
+  Views.renderSync( Config ).prependTo( document.body )
+}
 
-  /*----------------------------------------------------------------*/
-	// Render UI Views
-	Views.renderSync( Config ).prependTo( document.body )
+( async () => {
+  // Sandbox initial states
+  await initialStates()
+  // Sandbox to Emulator control channel
+  await controlChannel()
+  // Run sandbox
+  await run()
 } )()

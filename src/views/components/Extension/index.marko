@@ -3,7 +3,7 @@ import * as Plugin from './Plugin'
 import * as Application from './MicroApp'
 
 class {
-  onCreate( input ){
+  async onCreate( input ){
     this.state = {
       loaded: false, 
       errmess: false,
@@ -12,7 +12,7 @@ class {
     
     this.nsi = input.id || input.nsi
     this.extension = null
-    this.directory = null
+    this.root = null
 
     this.Manager = null
     this.LanguageManifest = null
@@ -20,7 +20,10 @@ class {
     
     GState.bind( this, [ this.nsi, 'tenant', 'user', 'theme', 'workspace', 'screen', 'locale' ] )
     
-    this.fetchComponent( this.exactInput( input ) )
+    this.resolveRoot( input )
+    await this.loadLanguageManifest()
+    await this.loadLocaleDictionary( true )
+    await this.fetchComponent( this.exactInput( input ) )
   }
   onInput( input ){ this.input = this.exactInput( input ) }
   onMount(){
@@ -33,10 +36,22 @@ class {
 
   exactInput( input ){
     const metaset = input.name && !input.nsi ? 
-                                        { ...input, ...( window.Extensions.meta( input.name ) ) } 
-                                        : input
-                                        
+                            { ...input, ...( window.Extensions.meta( input.name ) ) } 
+                            : input
+                            
     return metaset && metaset.nsi ? metaset : null
+  }
+  resolveRoot( input ){
+    // Get extension path by account type configuration
+    const 
+    { type, nsi, runscript, version, namespace } = input,
+    accountType = this.state.user.accounttype.toLowerCase()
+    // Path of the component to load as main package: Default is `index.marko`
+    
+    // this.root = runscript
+    //             && ( ( runscript['*'] && runscript['*'].main ) // Main component for all account
+    //             || ( runscript[ accountType ] && runscript[ accountType ].main ) ) // Main component for specific account type
+    this.root = ''
   }
   allowedScope( target ){
     
@@ -106,11 +121,11 @@ class {
     
     console.log('Output Event: ', ...args )
   }
-  Debug( message, status ){
+  Debug( message, status, trace ){
     debugLog( `[${this.input.name}]`, message )
     // Emit log to emulator
     window.iof 
-    && window.iof.emit( 'console:log', { name: this.input.name, type: 'debug', message, status } )
+    && window.iof.emit( 'console:log', { name: this.input.name, type: 'debug', message, status, trace } )
   }
   RenderLocale( text ){
     /* Static translation
@@ -166,27 +181,10 @@ class {
     
     if( !input ) return
     try {
-      // Get extension path by account type configuration
-      const 
-      { type, nsi, runscript, version, namespace } = input,
-      accountType = this.state.user.accounttype.toLowerCase()
-      // Path of the component to load as main package: Default is `index.marko`
-      
-      // this.directory = runscript
-      //                  && ( ( runscript['*'] && runscript['*'].main ) // Main component for all account
-      //                  || ( runscript[ accountType ] && runscript[ accountType ].main ) ) // Main component for specific account type
-      this.directory = ''
-      
       // Fetch Marko template targeting available version
-      this.extension = await import(`root/${this.directory}`)
-      // Load defined locale language translation manifest.json file
-      this.LanguageManifest = require(`root/${this.directory}locales/manifest.json`)
-      // Send language manifest to emulator
-      window.iof.off('get:languages') // Remove previous listener
-      window.iof.on( 'get:languages', fn => typeof fn == 'function' && fn( false, this.LanguageManifest ) )
-      
+      this.extension = await import(`root/${this.root}`)
       // Initialize extension manager
-      this.Manager = type == 'application' ? new Application.Manager( this ) : new Plugin.Manager( this )
+      this.Manager = input.type == 'application' ? new Application.Manager( this ) : new Plugin.Manager( this )
 
       this.state.loaded = true
     }
@@ -194,6 +192,13 @@ class {
       console.log( error )
       this.state.errmess = error.message
     }
+  }
+  async loadLanguageManifest(){
+    // Load defined locale language translation manifest.json file
+    this.LanguageManifest = require(`root/${this.root}locales/manifest.json`)
+    // Send language manifest to emulator
+    window.iof.off('get:languages') // Remove previous listener
+    window.iof.on( 'get:languages', fn => typeof fn == 'function' && fn( false, this.LanguageManifest ) )
   }
   async loadLocaleDictionary( activate ){
     // Load current locale language's provided Dictionary
@@ -212,10 +217,8 @@ class {
       if( !locale ) 
         throw new Error(`${locale} language dictionary not found`)
 
-      this.LanguageDictionary = await import(`root/${this.directory}locales/${locale.dictionary}`)
-      
-      this.state.errmess = false
-      this.state.currentLanguage = currentLanguage
+      this.LanguageDictionary = await import(`root/${this.root}locales/${locale.dictionary}`)
+      this.setState({ errmess: false, currentLanguage })
     }
     catch( error ){ this.state.errmess = error.message }
 
@@ -223,43 +226,45 @@ class {
   }
 }
 
-<if( !state.errmess )>
-  <!-- Extension loading stage -->
-  <if( state.loaded === false )>
-    <Loading ...input/>
+<TryCatch>
+  <if( !state.errmess )>
+    <!-- Extension loading stage -->
+    <if( state.loaded === false )>
+      <Loading ...input/>
+    </if>
+    <else-if( component.extension )>
+      <!-- Render the extension -->
+      $ {
+        // Assign all extension infos to itself as `meta`
+        const meta = newObject( input )
+        delete meta.payload
+      }
+      
+      <context locale=state.locale
+                RenderLocale=component.RenderLocale.bind( component )>
+        <${component.extension} meta=meta
+                                action=(state[ component.nsi ] ? state[ component.nsi ].action : input.action)
+                                payload=(state[ component.nsi ] ? state[ component.nsi ].payload : input.payload)
+                                theme=state.theme
+                                screen=state.screen
+                                mode=state.workspace.mode
+                                context=state.workspace.context
+                                user=component.allowedScope('user')
+                                tenant=component.allowedScope('tenant')
+                                Declare=( component.Manager && component.Manager.bind )/>
+      </context>
+    </else-if>
   </if>
-  <else-if( component.extension )>
-    <!-- Render the extension -->
-    $ {
-      // Assign all extension infos to itself as `meta`
-      const meta = newObject( input )
-      delete meta.payload
-    }
-    
-    <context locale=state.locale
-              RenderLocale=component.RenderLocale.bind( component )>
-      <${component.extension} meta=meta
-                              action=(state[ component.nsi ] ? state[ component.nsi ].action : input.action)
-                              payload=(state[ component.nsi ] ? state[ component.nsi ].payload : input.payload)
-                              theme=state.theme
-                              screen=state.screen
-                              mode=state.workspace.mode
-                              context=state.workspace.context
-                              user=component.allowedScope('user')
-                              tenant=component.allowedScope('tenant')
-                              Declare=( component.Manager && component.Manager.bind )/>
-    </context>
-  </else-if>
-</if>
-<else>
-  <!-- Error encounted when loading extension -->
-  <div class="h-100 d-flex align-items-center">
-    <div class="w-100 text-center" key="error-block">
-      <i class="bx bx-error font-large-3" style="color:inherit"></i>
-      <br><br>
-      <p style="padding:0 10%">
-        Oops! ${state.errmess}
-      </p>
+  <else>
+    <!-- Error encounted when loading extension -->
+    <div class="h-100 d-flex align-items-center">
+      <div class="w-100 text-center" key="error-block">
+        <i class="bx bx-error font-large-3" style="color:inherit"></i>
+        <br><br>
+        <p style="padding:0 10%">
+          Oops! ${state.errmess}
+        </p>
+      </div>
     </div>
-  </div>
-</else>
+  </else>
+</TryCatch>

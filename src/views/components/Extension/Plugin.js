@@ -9,12 +9,8 @@ function Instance( ___, $ ){
   extensionId = $.nsi,
 
   Features = {
-
     // Localstorage support
     UIStore: new Storage({ prefix: extensionId, encrypt: true }),
-
-    // Activate locale language support
-    Locale: ( async () => await $.loadLocaleDictionary( true ) )(),
 
     // Global state in-plugin support
     State: ( () => {
@@ -99,13 +95,21 @@ function Instance( ___, $ ){
   // Extend plugin instance Features & Data to sub-components
   this.extend = ( component, deps ) => {
     // Confer existing static data of the main plugin component to extend components
-    component.Plugin = ___.Plugin
-    // Assign additional required features
-    deps && ___.Plugin.use( deps )
+    component.Plugin = new Instance( component, $ )
+    // Assign requested app Features to the component
+    component.Plugin.use([ ...this.deps, ...(deps || []) ])
+    // Assign main app data
+    component.Plugin.data = ___.Plugin.data
+
     // Automatically bind plugins's global state to this extended component
-    this.deps 
-    && this.deps.includes('State') 
+    this.deps.includes('State') 
     && ___.Plugin.State.bind( component, stateKeys )
+
+    /** Overwride debug method to be
+     * able to trace directly to this 
+     * component
+     */
+    component.Plugin.debug = ( message, status ) => this.debug( message, status, component )
 
     return this
   }
@@ -127,7 +131,13 @@ function Instance( ___, $ ){
   this.quit = () => $.Quit()
 
   // Debug mode logs
-  this.debug = ( ...args ) => $.Debug( ...args )
+  this.debug = ( message, status, component ) => {
+    const
+    { name, version } = $.input,
+    trace = ( component || ___ ).___type.replace( new RegExp(`\/${name}\\$(([0-9]+)\.)+`, 'i'), '')
+
+    $.Debug( message, status, trace )
+  }
 
   // Pass static data to the plugin that can be share with any sub-component that extend it
   this.data = {}
