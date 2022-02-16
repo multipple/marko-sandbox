@@ -190,7 +190,7 @@ function Instance( ___, $ ){
      * able to trace directly to this 
      * component
      */
-    component.App.debug = ( message, status ) => this.debug( message, status, component )
+    component.App.debug = ( message, data, status ) => this.debug( message, data, status, component )
 
     return this
   }
@@ -215,12 +215,23 @@ function Instance( ___, $ ){
   this.refresh = () => $.Refresh()
 
   // Debug mode logs
-  this.debug = ( message, status, component ) => {
+  this.debug = ( message, data, status, component ) => {
+    if( !message ) return
+
+    if( typeof status !== 'string' ){
+      status = 'log'
+      
+      if( ['warning', 'info', 'success', 'danger'].includes( data ) ){
+        status = data
+        data = undefined
+      }
+    }
+
     const
     { name, version } = $.input,
     trace = ( component || ___ ).___type.replace( new RegExp(`\/${name}\\$(([0-9]+)\.)+`, 'i'), '')
 
-    $.Debug( message, status, trace )
+    $.Debug( message, data, status, trace )
   }
 
   // App listening to core system signals

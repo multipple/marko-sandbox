@@ -55,10 +55,10 @@ class {
   }
   allowedScope( target ){
     
-    if( !this.input.configs
-        || !this.input.configs.permissions 
-        || !Array.isArray( this.input.configs.permissions.scope )
-        || !this.input.configs.permissions.scope.length ) return {}
+    if( !this.input.resource
+        || !this.input.resource.permissions 
+        || !Array.isArray( this.input.resource.permissions.scope )
+        || !this.input.resource.permissions.scope.length ) return {}
 
     const scopeData = {}
     let targetData = {}
@@ -98,9 +98,9 @@ class {
       receiver[ toCheck ] = holder[ toCheck ]
     }
     
-    this.input.configs.permissions.scope.map( ({ type, access }) => {
+    this.input.resource.permissions.scope.map( ({ type, access }) => {
       // Assign granted permission data
-      if( access == 'GRANTED' )
+      if( type.includes( target ) && access == 'GRANTED' )
         assignValue( type.replace(/^[a-zA-Z0-9]+\./, ''), targetData, scopeData )
 
       /* TODO: Collect the list of mandatory permission
@@ -121,11 +121,11 @@ class {
     
     console.log('Output Event: ', ...args )
   }
-  Debug( message, status, trace ){
-    debugLog( `[${this.input.name}]`, message )
+  Debug( message, data, status, trace ){
+    // debugLog( `[${this.input.name}]`, message )
     // Emit log to emulator
-    window.iof 
-    && window.iof.emit( 'console:log', { name: this.input.name, type: 'debug', message, status, trace } )
+    const dataset = { name: this.input.name, type: 'debug', message, data, status, trace }
+    window.iof && window.iof.emit( 'console:log', dataset )
   }
   RenderLocale( text ){
     /* Static translation
