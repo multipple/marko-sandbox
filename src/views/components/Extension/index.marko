@@ -33,7 +33,7 @@ class {
       await this.loadLocaleDictionary()
     } )
   }
-
+  
   exactInput( input ){
     const metaset = input.name && !input.nsi ? 
                             { ...input, ...( window.Extensions.meta( input.name ) ) } 
@@ -112,6 +112,17 @@ class {
     
     return scopeData
   }
+  throwError( error ){
+
+    if( error === false ){
+      this.state.errmess = false
+      return
+    }
+
+    console.log( error )
+    window.GTrace.throw( error )
+    this.state.errmess = error.message
+  }
 
   Refresh(){ window.Extensions.list[ this.input.name ].refresh() }
   Emit( ...args ){
@@ -188,10 +199,7 @@ class {
 
       this.state.loaded = true
     }
-    catch( error ){
-      console.log( error )
-      this.state.errmess = error.message
-    }
+    catch( error ){ this.throwError( error ) }
   }
   async loadLanguageManifest(){
     // Load defined locale language translation manifest.json file
@@ -203,7 +211,7 @@ class {
   async loadLocaleDictionary( activate ){
     // Load current locale language's provided Dictionary
     if( !this.LanguageManifest ){
-      if( activate ) this.state.errmess = 'Locale languages manifest not found'
+      activate && this.throwError( new Error('Locale languages manifest not found') )
       return
     }
 
@@ -220,7 +228,7 @@ class {
       this.LanguageDictionary = await import(`root/${this.root}locales/${locale.dictionary}`)
       this.setState({ errmess: false, currentLanguage })
     }
-    catch( error ){ this.state.errmess = error.message }
+    catch( error ){ this.throwError( error ) }
 
     return this.RenderLocale
   }
