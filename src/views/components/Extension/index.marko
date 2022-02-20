@@ -125,6 +125,16 @@ class {
   }
 
   Refresh(){ window.Extensions.list[ this.input.name ].refresh() }
+  Request( options ){
+    return new Promise( ( resolve, reject ) => {
+      window.Request( '/extension/request', 'POST', options )
+            .then( resolve )
+            .catch( error => {
+              this.throwError( error )
+              reject( error )
+            })
+    } )
+  }
   Emit( ...args ){
     this.emit( ...args )
     this.emit('forward', ...args )
@@ -150,7 +160,7 @@ class {
     let translation = // Check dictionary provided by the extension
                       ( this.LanguageDictionary && this.LanguageDictionary[ text ] )
                       // Check in global dictionnary: Standard Words/Terms
-                      || ( this.state.locale && this.state.local.dictionary[ text ] )
+                      // || ( this.state.locale && this.state.local.dictionary[ text ] )
                       // Fallback to original text
                       || text
 

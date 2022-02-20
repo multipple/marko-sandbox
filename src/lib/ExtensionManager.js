@@ -237,7 +237,7 @@ window.Extensions = {
 
   install: async extension => {
     
-    if( !isExtension( extension ) || AccountType == 'Studio' ) return
+    if( !isExtension( extension ) ) return
     if( window.Extensions.list.hasOwnProperty( extension.name ) ){
 
       // TODO: Throw extension already exist dialog
@@ -270,7 +270,7 @@ window.Extensions = {
 
   uninstall: async id => {
 
-    if( !id || AccountType == 'Studio' ) return
+    if( !id ) return
     try {
       const { error, message } = await Request(`/extension/${id}/uninstall`, 'DELETE')
       if( error ) throw new Error( message )
@@ -395,7 +395,13 @@ export const getExt = async id => {
 
 export const fetchExt = async query => {
   // Fetch all installed extension or query a specific category
-  try { return [ require('root/../config.json') ] }
+  try {
+    // const { error, message, extensions, results } = await window.Request(`/extension/${query ? 'search?query='+ query : 'list'}`)
+    // if( error ) throw new Error( message )
+
+    // return extensions || results
+    return []
+  }
   catch( error ){
     console.log('Failed Fetching Extensions: ', error )
     return []

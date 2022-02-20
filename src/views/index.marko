@@ -14,7 +14,7 @@ import TestManager from './../lib/TestManager'
 class {
   onCreate(){
     this.state = { extinput: null }
-    GState.bind(this, ['theme'])
+    GState.bind(this, ['theme', 'running'])
     
     this.adaptiveThemeType()
     this.adaptiveThemeMode()
@@ -138,9 +138,14 @@ class {
 
 <div class=`th--${state.theme.mode}`>
   <div.vw-100.vh-100.theme-bg.overflow-auto>
-    <Extension name=input.name 
+    <if( state.running )>
+      <Extension name=input.name 
                 ...state.extinput
                 debug
                 on-test-event( component.onOutputEvent )/>
+    </if>
+    <else>
+      Installing ...
+    </else>
   </div>
 </div>
