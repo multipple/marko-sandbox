@@ -215,6 +215,7 @@ class {
     // Load defined locale language translation manifest.json file
     this.LanguageManifest = require(`root/${this.root}locales/manifest.json`)
     // Send language manifest to emulator
+    if( !window.iof ) return
     window.iof.off('get:languages') // Remove previous listener
     window.iof.on( 'get:languages', fn => typeof fn == 'function' && fn( false, this.LanguageManifest ) )
   }

@@ -156,7 +156,7 @@ async function initialStates(){
       try {
         const locale = Locales[ language ]
         if( !locale ) 
-          return reject('${locale} language dictionary not found')
+          return reject(`${locale} language dictionary not found`)
 
         const dictionary = require(`root/locales/${locale.dictionary}`)
         GState.set( 'locale', { language, variant, dictionary } )

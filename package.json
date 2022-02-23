@@ -20,6 +20,7 @@
     "iframe.io": "^0.0.8",
     "jquery": "^3.6.0",
     "markojs-shared-state": "^0.3.0",
+    "moment": "^2.29.1",
     "razzle": "4.1.0",
     "tracekit": "^0.4.6"
   },

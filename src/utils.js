@@ -1,6 +1,7 @@
 
 
 import jQuery from 'jquery'
+import moment from 'moment'
 import TraceKit from 'tracekit'
 import SS from 'markojs-shared-state'
 import Storage from 'all-localstorage'
@@ -90,4 +91,13 @@ window.corsProxy = ( url, type ) => {
 window.random = ( min, max ) => {
   // generate random number at a range
   return Math.floor( Math.random() * ( max - min + 1 )+( min + 1 ) )
+}
+
+window.formatDate = ( date, format ) => {
+
+  const _date = date == 'now' ? moment() : moment( date )
+
+  if( format == 'calendar' ) return _date.calendar()
+
+  return _date.format( format )
 }
