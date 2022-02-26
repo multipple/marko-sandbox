@@ -13,7 +13,7 @@ import TestManager from './../lib/TestManager'
 
 class {
   onCreate(){
-    this.state = { extinput: null }
+    this.state = { payload: null }
     GState.bind(this, ['theme', 'workspace', 'running'])
     
     this.adaptiveThemeType()
@@ -81,7 +81,7 @@ class {
       await tm.load( this.TestManifest[ type ].path )
 
       // Pipe to text manager to get test input as a new run start
-      tm.pipe( extinput => this.state.extinput = extinput )
+      tm.pipe( payload => this.state.payload = payload )
       // Get occured output events from extension
       this.onOutputEvent = tm.event
 
@@ -140,9 +140,9 @@ class {
   <div.vw-100.vh-100.theme-bg.overflow-auto>
     <if( state.running )>
       <Extension name=input.name 
-                ...state.extinput
-                debug
-                on-test-event( component.onOutputEvent )/>
+                  payload=state.payload
+                  debug
+                  on-test-event( component.onOutputEvent )/>
     </if>
     <else>
       Installing ...
