@@ -251,7 +251,6 @@ class {
       <context locale=state.locale
                 RenderLocale=component.RenderLocale.bind( component )>
         <${component.extension} meta=meta
-                                action=(state[ component.nsi ] ? state[ component.nsi ].action : input.action)
                                 payload=(state[ component.nsi ] ? state[ component.nsi ].payload : input.payload)
                                 theme=state.theme
                                 screen=state.screen

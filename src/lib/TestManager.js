@@ -1,8 +1,7 @@
-import { fn } from "jquery"
 
 const TIMEOUT = 4000
 
-function TestSession( { __id, __input, description }, Manager ){
+function TestSession( { __id, __payload, description }, Manager ){
 
   this.Events = {}
 
@@ -58,16 +57,16 @@ function TestSession( { __id, __input, description }, Manager ){
     }
   }
 
-  this.trigger = input => {
+  this.trigger = payload => {
     // Run session
-    if( !input && !__input )
-      throw new Error('Cannot run a session with no <input>')
+    if( !payload && !__payload )
+      throw new Error('Cannot run a session with no <payload>')
 
-    // Inject test input
-    Manager.pipeThrough( input || __input )
+    // Inject test payload
+    Manager.pipeThrough( payload || __payload )
   }
 
-  this.next = async ( id, input ) => await Manager.run( id, input )
+  this.next = async ( id, payload ) => await Manager.run( id, payload )
 }
 
 function EventCollector( executor ){
@@ -118,13 +117,13 @@ export default function Manager( options ){
             && this.Registry[ __id ].export
   }
 
-  function _pipeThrough( __input ){
-    // Pipe triggered session input to extenal handler
+  function _pipeThrough( __payload ){
+    // Pipe triggered session payload to external handler
     typeof this.PipeFunction == 'function'
-    && this.PipeFunction( __input )
+    && this.PipeFunction( __payload )
   }
 
-  this.session = ( about, input, executor ) => {
+  this.session = ( about, payload, executor ) => {
     
     let __id
     const reg = {}
@@ -145,13 +144,13 @@ export default function Manager( options ){
       default: throw new Error('Expect first parameter to be <string> or <object>')
     }
     
-    if( typeof input == 'function' ){
-      executor = input
-      reg.__input = null
+    if( typeof payload == 'function' ){
+      executor = payload
+      reg.__payload = null
     }
-    else reg.__input = input
+    else reg.__payload = payload
 
-    // TODO: Check input.payload validation scheme define by the app
+    // TODO: Check payload validation scheme define by the app
 
 
 
@@ -180,7 +179,7 @@ export default function Manager( options ){
     this.Registry[ __id ] = reg
   }
 
-  this.run = ( __id, input ) => {
+  this.run = ( __id, payload ) => {
     return new Promise( ( resolve, reject ) => {
       // Run specified next session
       const session = this.Registry[ __id ]
@@ -204,9 +203,9 @@ export default function Manager( options ){
       } )
       
       /** Trigger test
-       * NOTE: Session self defined input will be use as fallback
+       * NOTE: Session self defined payload will be use as fallback
        */
-      ;( input || session.__input ) && session.trigger( input )
+      ;( payload || session.__payload ) && session.trigger( payload )
 
       this.ActiveSessions[ __id ] = session
     } )
@@ -218,7 +217,7 @@ export default function Manager( options ){
       throw new Error(`Invalid operation. No session defined`)
 
     for( let __id in this.Registry )
-      await this.run( __id, this.Registry[ __id ].__input )
+      await this.run( __id, this.Registry[ __id ].__payload )
   }
   
   // Load test scripts
@@ -233,7 +232,7 @@ export default function Manager( options ){
     catch( error ){ debugLog('Error: ', error ) }
   }
 
-  // Define interface that stream inputs from test triggerers to test handler
+  // Define interface that stream payloads from test triggerers to test handler
   this.pipe = fn => this.PipeFunction = fn
 
   // Dispatch event to active sessions
