@@ -6,6 +6,7 @@ import Locales from 'root/locales/manifest.json'
 import Config from 'root/../config.json'
 import Views from './views'
 
+import ExtensionConfig from 'root/../config.json'
 import Tenant from './data/tenant.json'
 import User from './data/user.json'
 
@@ -28,9 +29,11 @@ Theme = {
   color: 'default'
 }
 
+let extensionId
+
 function controlChannel(){
   // Initial connection with content window
-  return new Promise( resolve => {
+  return new Promise( ( resolve, reject ) => {
     window.iof = new IOF({ debug: true })
 
     iof.listen()
@@ -49,9 +52,35 @@ function controlChannel(){
       iof.emit('start')
       resolve()
     } )
+
+    setTimeout( () => reject('[TIMEOUT]: Sandbox server failed to connect to Emulator: ./client.js'), 8000 )
     
+    /*----------------------------------------------------------------*/
     // Report error stack to emulator
     GTrace.listen( error => iof.emit( 'console:log', { name: Config.name, type: 'error', error, status: 'danger' } ))
+
+    /*----------------------------------------------------------------*/
+    // Forward API request to Emulator
+    window.Request = ( url, method, body, headers ) => {
+
+      function isProcess( verb ){ return ['install', 'uninstall'].includes( verb ) }
+
+      return new Promise( ( resolve, reject ) => {
+        let 
+        options = { url, method: method || 'GET', body, headers },
+        verb = 'api',
+        formatResponse = resp => {
+          return isProcess( verb ) ? { error: false, message: 'Extension '+ verb, extensionId: resp } : resp
+        }
+
+        if( url.includes('uninstall') ) verb = 'uninstall' 
+        else if( url.includes('install') ) verb = 'install'
+
+        if( isProcess( verb ) ) options = body
+
+        iof.emit( `request:${verb}`, options, ( error, response ) => error ? reject( error ) : resolve( formatResponse( response ) ) )
+      } )
+    }
   } )
 }
 
@@ -127,7 +156,7 @@ async function initialStates(){
       try {
         const locale = Locales[ language ]
         if( !locale ) 
-          return reject('${locale} language dictionary not found')
+          return reject(`${locale} language dictionary not found`)
 
         const dictionary = require(`root/locales/${locale.dictionary}`)
         GState.set( 'locale', { language, variant, dictionary } )
@@ -198,13 +227,21 @@ async function run(){
   await loadExt( accountType )
   // Render UI Views
   Views.renderSync( Config ).prependTo( document.body )
+
+  // Auto-install & register the extension
+  extensionId = await window.Extensions.install( ExtensionConfig )
+  // The signal <Extension/> to load
+  extensionId && GState.set( 'running', true )
 }
 
 ( async () => {
-  // Sandbox initial states
-  await initialStates()
-  // Sandbox to Emulator control channel
-  await controlChannel()
-  // Run sandbox
-  await run()
+  try {
+    // Sandbox initial states
+    await initialStates()
+    // Sandbox to Emulator control channel
+    await controlChannel()
+    // Run sandbox
+    await run()
+  }
+  catch( error ){ console.error( error ) }
 } )()

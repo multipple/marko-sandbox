@@ -1,9 +1,21 @@
 
 
 import jQuery from 'jquery'
+import moment from 'moment'
 import TraceKit from 'tracekit'
 import SS from 'markojs-shared-state'
 import Storage from 'all-localstorage'
+
+String.prototype.toCapitalCase = function(){
+  // Fonction de capitalisation du premier caractère d'un mot
+  this.toLowerCase()
+
+  const
+  First = this.charAt(0),
+  regex = new RegExp('^'+ First )
+
+  return First.toUpperCase() + this.split( regex )[1]
+}
 
 window.$ = 
 window.jQuery = jQuery,
@@ -70,3 +82,22 @@ window.isEmpty = entry => {
 }
 
 window.newObject = obj => { return typeof obj == 'object' && JSON.parse( JSON.stringify( obj ) ) }
+
+window.corsProxy = ( url, type ) => {
+  // Ignore wrapping same origin URL
+  return `https://web.getlearncloud.com/proxy?url=${encodeURIComponent( url )}&responseType=${type || 'blob'}` 
+}
+
+window.random = ( min, max ) => {
+  // generate random number at a range
+  return Math.floor( Math.random() * ( max - min + 1 )+( min + 1 ) )
+}
+
+window.formatDate = ( date, format ) => {
+
+  const _date = date == 'now' ? moment() : moment( date )
+
+  if( format == 'calendar' ) return _date.calendar()
+
+  return _date.format( format )
+}

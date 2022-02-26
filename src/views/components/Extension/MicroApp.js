@@ -39,32 +39,16 @@ function Instance( ___, $ ){
 
     // API request handler
     Request: async ( url, options ) => {
-      return new Promise( ( resolve, reject ) => {
-
-        const 
-        headers = { 'Content-Type': 'application/json' },
-        body = JSON.stringify({
-                                extensionId,
-                                url,
-                                /*
-                                responseType: 'json',
-                                body: {...},
-                                authType: false,
-                                */
-                                ...options
-                              })
-                              
-        fetch( '/extension/request', { method: 'POST', headers, body } )
-            .then( response => {
-              if( !response.ok )
-                return reject({ code: response.status, message: response.statusText }) 
-              
-              try { return response.json() }
-              catch( error ){ return response.text() }
-            } )
-            .then( resolve )
-            .catch( reject )
-      } )
+      return await $.Request({
+                              extensionId,
+                              url,
+                              /*
+                              responseType: 'json',
+                              body: {...},
+                              authType: false,
+                              */
+                              ...options 
+                            })
     },
     
     Permission: {
