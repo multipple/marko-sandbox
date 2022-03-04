@@ -170,6 +170,13 @@ function Instance( ___, $ ){
     this.deps.includes('State')
     && component.App.State.bind( component, stateKeys )
 
+    // Overwride method & properties that execute only on the main component
+    component.App.Features = Features
+    component.App.extend = this.extend
+    component.App.getConfig = this.getConfig
+    component.App.setConfig = this.setConfig
+    component.App.getPlugin = this.getPlugin
+
     /** Overwride debug method to be
      * able to trace directly to this 
      * component
@@ -179,7 +186,7 @@ function Instance( ___, $ ){
     return this
   }
   // Return active configuration of the app
-  this.getConfig = type => { return ___.input.meta.configs[ type ] }
+  this.getConfig = type => { return ___.input.meta.configs && ___.input.meta.configs[ type ] }
 
   // Set & Update an installed app configuration
   this.setConfig = async payload => {
@@ -187,7 +194,7 @@ function Instance( ___, $ ){
   }
 
   // Return configuration of a given plugin used in the app
-  this.getPlugin = type => { return ___.input.meta.plugins && ___.input.meta.plugins[ type ] }
+  this.getPlugin = nsi => { return ___.input.meta.plugins && ___.input.meta.plugins[ nsi ] }
 
   // Forward app `event` to Extension wrapper's component
   this.emit = ( ...args ) => $.Emit( ...args )

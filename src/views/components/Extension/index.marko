@@ -10,6 +10,8 @@ class {
       currentLanguage: 'en-US'
     }
     
+    input = this.exactInput( input )
+    
     this.nsi = input.id || input.nsi
     this.extension = null
     this.root = null
@@ -21,9 +23,10 @@ class {
     GState.bind( this, [ this.nsi, 'tenant', 'user', 'theme', 'workspace', 'screen', 'locale' ] )
     
     this.resolveRoot( input )
-    await this.loadLanguageManifest()
-    await this.loadLocaleDictionary( true )
-    await this.fetchComponent( this.exactInput( input ) )
+    // Load defined language manifest and dictionaries
+    await this.loadLanguageManifest() && await this.loadLocaleDictionary( true )
+    // Fetch component module
+    await this.fetchComponent( input )
   }
   onInput( input ){ this.input = this.exactInput( input ) }
   onMount(){
@@ -212,12 +215,19 @@ class {
     catch( error ){ this.throwError( error ) }
   }
   async loadLanguageManifest(){
-    // Load defined locale language translation manifest.json file
-    this.LanguageManifest = require(`root/${this.root}locales/manifest.json`)
-    // Send language manifest to emulator
-    if( !window.iof ) return
-    window.iof.off('get:languages') // Remove previous listener
-    window.iof.on( 'get:languages', fn => typeof fn == 'function' && fn( false, this.LanguageManifest ) )
+    try { 
+      // Load defined locale language translation manifest.json file
+      this.LanguageManifest = require(`root/${this.root}locales/manifest.json`)
+
+      // Send language manifest to emulator
+      if( !window.iof ){
+        window.iof.off('get:languages') // Remove previous listener
+        window.iof.on( 'get:languages', fn => typeof fn == 'function' && fn( false, this.LanguageManifest ) )
+      }
+
+      return true
+    }
+    catch( error ){ return false }
   }
   async loadLocaleDictionary( activate ){
     // Load current locale language's provided Dictionary
@@ -234,7 +244,7 @@ class {
     try {
       const locale = this.LanguageManifest[ language ]
       if( !locale ) 
-        throw new Error(`${locale} language dictionary not found`)
+        throw new Error(`"${locale || currentLanguage}" language dictionary not found`)
 
       this.LanguageDictionary = await import(`root/${this.root}locales/${locale.dictionary}`)
       this.setState({ errmess: false, currentLanguage })
