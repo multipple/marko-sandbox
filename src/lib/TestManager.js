@@ -224,7 +224,7 @@ export default function Manager( options ){
   this.load = async kitpath => {
     try {
       const 
-      mod = await import(`test/${kitpath}`),
+      mod = require(`test/${kitpath}`),
       scripts = await ( await window.fetch( mod.default.toString() ) ).text()
       
       Function(`(function(test){${scripts}})(this)`).apply( this )

@@ -13,8 +13,10 @@
     "@marko-tags/context": "^2.2.2",
     "@marko/express": "^1.0.0",
     "all-localstorage": "^1.0.1",
+    "assert": "^2.0.0",
     "boxicons": "^2.1.1",
     "compression": "^1.7.4",
+    "crypto-browserify": "^3.12.0",
     "express": "^4.17.1",
     "helmet": "^5.0.2",
     "iframe.io": "^0.0.8",
@@ -22,6 +24,7 @@
     "markojs-shared-state": "^0.3.0",
     "moment": "^2.29.1",
     "razzle": "4.1.0",
+    "stream-browserify": "^3.0.0",
     "tracekit": "^0.4.6"
   },
   "devDependencies": {

@@ -52,10 +52,17 @@ module.exports = {
     webpackConfig.resolve.extensions = [ ...webpackConfig.resolve.extensions, '.css', '.scss', '.marko' ]
     webpackConfig.resolve.alias = {
       ...webpackConfig.resolve.alias,
+      'extension': path.resolve(__dirname, 'src/views/components/Extension'),
       'themes': path.resolve(__dirname, 'src/views/themes'),
       'test': path.resolve(__dirname, '../test'),
       'root': path.resolve(__dirname, '../src'),
       ['~']: path.resolve(__dirname, 'src/views/assets'),
+    }
+    webpackConfig.resolve.fallback = { 
+      ...webpackConfig.resolve.fallback,
+      assert: require.resolve('assert'),
+      stream: require.resolve('stream-browserify'),
+      crypto: require.resolve('crypto-browserify')
     }
 
     webpackConfig.plugins.push(new MiniCssExtractPlugin())
