@@ -1,6 +1,5 @@
 
 import Storage from 'all-localstorage'
-import { fn } from 'jquery'
 import SharedState from 'markojs-shared-state'
 
 function Instance( ___, $ ){
@@ -185,12 +184,17 @@ function Instance( ___, $ ){
 
     return this
   }
+
   // Return active configuration of the app
   this.getConfig = type => { return ___.input.meta.configs && ___.input.meta.configs[ type ] }
 
   // Set & Update an installed app configuration
-  this.setConfig = async payload => {
-    return await Features.Request(`/extension/${___.input.meta.id}/configure`, { method: 'POST', body: payload })
+  this.setConfig = async ( payload, pluginNSI ) => {
+    const response = await Features.Request(`/extension/${extensionId}/configure${pluginNSI ? '?plugin='+ pluginNSI : ''}`, 
+                                            { method: 'POST', body: payload })
+
+    $.Refresh()
+    return response
   }
 
   // Return configuration of a given plugin used in the app

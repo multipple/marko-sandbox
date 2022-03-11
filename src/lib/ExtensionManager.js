@@ -7,6 +7,7 @@ const
 __EXTS__ = {},
 __EXTNS__ = {},
 AutoLoadedExts = {},
+TempoLoadedExts = {},
 MimeTypeSupportExts = {}
 
 function isExtension(){
@@ -36,8 +37,8 @@ function runExt( id, payload ){
     const { runscript } = actives[ id ]
     WSMode = runscript
               && ( runscript.workspace
-                  || ( runscript['*'] && runscript['*'].workspace )
-                  || ( runscript[ AccountType ] && runscript[ AccountType ].workspace ) )
+                  || ( runscript[ AccountType ] && runscript[ AccountType ].workspace )
+                  || ( runscript['*'] && runscript['*'].workspace ) )
   }
   
   // No re-position required for single view block
@@ -82,6 +83,15 @@ function quitExt( id ){
   GState.set( 'activeExtensions', actives )
   uiStore.set( storeAttr, actives )
 
+  // Clear in case of temporary loaded extension
+  if( TempoLoadedExts[ id ] ){
+    delete AutoLoadedExts[ id ]
+    delete TempoLoadedExts[ id ]
+
+    GState.dirty('Extensions', AutoLoadedExts )
+    uiStore.set( storeAttr +'-tempo', TempoLoadedExts )
+  }
+
   // Hide Aside when all extension & marketplace are closed
   !GState.get('marketplace')
   && GState.workspace.layout({ mode: !Object.keys(actives).length ? 'ns' : 'auto' })
@@ -95,7 +105,7 @@ async function refreshExt( id, payload ){
 
     // Replace extension metadata
     __EXTS__[ id ] = metadata
-    __EXTNS__[ metadata.name ] = metadata
+    __EXTNS__[`${metadata.nsi}~${metadata.version}`] = metadata
     
     // Re-run the extension with current payload if active
     const actives = GState.get('activeExtensions')
@@ -105,6 +115,44 @@ async function refreshExt( id, payload ){
     }
   }
   catch( error ){ console.log('Failed Refreshing Extension: ', error ) }
+}
+
+async function getPlugin( id ){
+  // Fetch dependency plugin dataset from marketplace
+  try {
+    const { error, message, extension } = await window.MPSRequest(`/extension/${id}`)
+    if( error ) throw new Error( message )
+
+    return extension
+  }
+  catch( error ){ console.log('Failed Retreiving plugin dataset: ', error ) }
+}
+
+async function assignDependencies( extension ){
+  // Check and load an application/plugin dependencies
+  const deps = extension.resource
+                && extension.resource.dependencies
+                && extension.resource.dependencies.length
+                && extension.resource.dependencies.filter( each => { return /^plugin:(.+)$/.test( each ) } )
+
+  if( !Array.isArray( deps ) || !deps.length ) return extension
+
+  for( const x in deps ){
+    let plugin = await getPlugin( deps[x] )
+    // No found
+    if( !plugin ) throw new Error(`<${deps[x]}> not found`)
+    
+    // Already installed
+    if( __EXTNS__[`${plugin.nsi}~${plugin.version}`] ) continue
+
+    // Also assign required plugin dependencies to this plugin if there is
+    plugin = await assignDependencies( plugin )
+    
+    if( !extension.plugins ) extension.plugins = {}
+    extension.plugins[ plugin.nsi ] = plugin
+  }
+
+  return extension
 }
 
 function requirePermission({ resource }){
@@ -149,6 +197,15 @@ function ExtensionManager( id, metadata ){
   this.run = payload => {
     this.payload = payload
     runExt( this.id, payload )
+
+    // Temporary load application to autoloaded list: Get removed when quit
+    if( !AutoLoadedExts[ this.id ] ){
+      AutoLoadedExts[ this.id ] =
+      TempoLoadedExts[ this.id ] = this.meta
+
+      GState.dirty('Extensions', AutoLoadedExts )
+      uiStore.set( storeAttr +'-tempo', TempoLoadedExts )
+    }
   }
 
   this.quit = () => {
@@ -204,7 +261,9 @@ window.Extensions = {
   meta: query => {
     // Retreive a given extension details by id or name
     for( let id in __EXTS__ )
-      if( query == id || __EXTS__[ id ].name == query )
+      if( query == id
+          || __EXTS__[ id ].nsi == query
+          || __EXTS__[ id ].name == query )
         return Object.assign( __EXTS__[ id ], { id } )
     
     // Extension not found
@@ -254,6 +313,10 @@ window.Extensions = {
         extension.resource.permissions.scope = list
     }
 
+    /** Assign required plugin dependencies to this extension
+     */
+    extension = await assignDependencies( extension )
+
     try {
       const { error, message, extensionId } = await window.Request('/extension/install', 'POST', extension )
       if( error ) throw new Error( message )
@@ -287,24 +350,15 @@ window.Extensions = {
 
   register: extension => {
     
-    const { id, name, runscript, resource } = extension
+    const { id, type, name, nsi, version, runscript, resource } = extension
 
     // Add extension to loaded list
     __EXTS__[ id ] =
-    __EXTNS__[ name ] = extension
+    __EXTNS__[`${nsi}~${version}`] = extension
 
-    /** Register globally all auto-loadable extensions
-     * that can show on toolbar by checking "runscript" 
-     * configuration rules
-     * 
-     * NOTE: Some extensions are not meant to 
-     * display in the toolbar/Aside.
-     */
-    if( runscript
-        && ( ( runscript['*'] && runscript['*'].autoload ) // All account
-              || ( runscript[ AccountType ] && runscript[ AccountType ].autoload ) ) ){ // Specific account
+    // List of intalled and registered applications: Auto-loadable or not
+    if( type == 'application' ){
       window.Extensions.list[ name ] = new ExtensionManager( id, extension )
-      AutoLoadedExts[ id ] = extension
 
       if( resource && resource.services && !isEmpty( resource.services ) ){
         // Extensions capable of reading particular type of file or data
@@ -320,7 +374,19 @@ window.Extensions = {
           MimeTypeSupportExts[ mime ].push({ id, name: extension.name, type: 'reader' })
         })
       }
+    }
 
+    /** Register globally all auto-loadable extensions
+     * that can show on toolbar by checking "runscript" 
+     * configuration rules
+     * 
+     * NOTE: Some extensions are not meant to
+     * display in the toolbar/Aside.
+     */
+    if( runscript
+        && ( ( runscript[ AccountType ] && runscript[ AccountType ].autoload ) // Specific account
+              || ( runscript['*'] && runscript['*'].autoload ) ) ){ // All account
+      AutoLoadedExts[ id ] = extension
       GState.dirty('Extensions', AutoLoadedExts )
     }
   },
@@ -328,10 +394,10 @@ window.Extensions = {
   unregister: id => {
     
     if( !__EXTS__[ id ] ) return
-    const { name } = __EXTS__[ id ]
+    const { name, version } = __EXTS__[ id ]
 
     delete __EXTS__[ id ]
-    delete __EXTNS__[ name ]
+    delete __EXTNS__[`${name}~${version}`]
     
     // Close auto-loaded application if running
     if( !AutoLoadedExts[ id ] || !window.Extensions.quit( name ) ) return
@@ -362,13 +428,15 @@ window.Extensions = {
     return true
   },
   
+  installed: () => { return Object.values( __EXTS__ ) },
+
   isInstalled: arg => { return __EXTS__.hasOwnProperty( arg ) || __EXTNS__.hasOwnProperty( arg ) }
 }
 
 export const loadExt = async accountType => {
   
-  AccountType = accountType.toLowerCase()
-  storeAttr = 'active-extensions-'+ AccountType
+  AccountType = accountType
+  storeAttr = 'active-extensions-'+ AccountType.toLowerCase()
 
   // Initialize extensions state handler
   GState.set( 'activeExtensions', uiStore.get( storeAttr ) || {} )

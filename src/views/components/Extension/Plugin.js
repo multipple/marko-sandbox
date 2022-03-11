@@ -120,12 +120,27 @@ function Instance( ___, $ ){
 
     return this
   }
+  
   // Return active configuration of the plugin
-  this.getConfig = type => { return ___.input.meta.configs && ___.input.meta.configs[ type ] }
+  this.getConfig = type => {
+    // Plugin integrated to a core app/plugin
+    if( $.input.core ){
+      const dataset = $.input.core.getPlugin( extensionId )
+      return dataset && dataset.configs && dataset.configs[ type ] || {}
+    }
+    
+    // Standalone plugin
+    return ___.input.meta.configs && ___.input.meta.configs[ type ] 
+  }
 
   // Set & Update an installed plugin configuration
-  this.setConfig = async payload => {
-    return await Features.Request(`/extension/${extensionId}/configure`, { method: 'POST', body: payload })
+  this.setConfig = async ( payload, pluginNSI ) => {
+
+    return $.input.core ?
+              // Plugin integrated into a core app/plugin
+              await $.input.core.setConfig( payload, extensionId )
+              // Standalone plugin
+              : await Features.Request(`/extension/${extensionId}/configure${pluginNSI ? '?plugin='+ pluginNSI : ''}`, { method: 'POST', body: payload })
   }
 
   // Return configuration of a given plugin embedded in this plugin

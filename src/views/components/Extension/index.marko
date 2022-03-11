@@ -11,6 +11,8 @@ class {
     }
     
     input = this.exactInput( input )
+    if( !input )
+      return this.throwError( new Error('Undefined extension <input>') )
     
     this.nsi = input.id || input.nsi
     this.extension = null
@@ -52,8 +54,8 @@ class {
     // Path of the component to load as main package: Default is `index.marko`
     
     // this.root = runscript
-    //             && ( ( runscript['*'] && runscript['*'].main ) // Main component for all account
-    //             || ( runscript[ accountType ] && runscript[ accountType ].main ) ) // Main component for specific account type
+    //             && ( ( runscript[ accountType ] && runscript[ accountType ].main ) // Main component for specific account type
+    //             || ( runscript['*'] && runscript['*'].main ) ) // Main component for all account
     this.root = ''
   }
   allowedScope( target ){
@@ -272,7 +274,7 @@ class {
       <context locale=state.locale
                 RenderLocale=component.RenderLocale.bind( component )>
         <${component.extension} meta=meta
-                                payload=(state[ component.nsi ] ? state[ component.nsi ].payload : input.payload)
+                                payload=(state[ component.nsi ] || input.payload)
                                 theme=state.theme
                                 screen=state.screen
                                 mode=state.workspace.mode
