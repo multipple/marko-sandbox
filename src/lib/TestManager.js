@@ -225,7 +225,7 @@ export default function Manager( options ){
     try {
       const 
       mod = require(`test/${kitpath}`),
-      scripts = await ( await window.fetch( mod.default.toString() ) ).text()
+      scripts = await ( await window.fetch( mod.toString() ) ).text()
       
       Function(`(function(test){${scripts}})(this)`).apply( this )
     }
