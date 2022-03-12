@@ -222,7 +222,7 @@ class {
       this.LanguageManifest = require(`root/${this.root}locales/manifest.json`)
 
       // Send language manifest to emulator
-      if( !window.iof ){
+      if( window.iof ){
         window.iof.off('get:languages') // Remove previous listener
         window.iof.on( 'get:languages', fn => typeof fn == 'function' && fn( false, this.LanguageManifest ) )
       }
@@ -238,8 +238,8 @@ class {
       return
     }
 
-    const 
-    currentLanguage = this.state.locale.language || this.state.currentLanguage,
+    const
+    currentLanguage = this.state.locale || this.state.currentLanguage,
     [ language, variant ] = currentLanguage.split('-')
 
     // Fetch another dictionary

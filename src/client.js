@@ -40,7 +40,7 @@ function controlChannel(){
     .on( 'theme:change', data => GState.set( 'theme', data ) )
     .on( 'ws:change', data => GState.workspace.layout( data ) )
     .on( 'screen:change', data => GState.set( 'screen', data ) )
-    .on( 'locale:change', data => GState.locale.switch( data ) )
+    .on( 'locale:change', data => GState.set( 'locale', data ) )
 
     .on( 'user:change', data => GState.set( 'user', { ...GState.get('user'), ...data } ) )
     .on( 'context:change', data => GState.workspace.context( data ) )
@@ -97,8 +97,7 @@ async function initialStates(){
 
   GState.set( 'tenant', tenantData )
   GState.set( 'user', userData )
-  // GState.set( 'locales', Locales || {} )
-
+  
   /*----------------------------------------------------------------*/
   /* Initial Workspace State: 
     - Context: Use for extensions & user activities tracking by page
