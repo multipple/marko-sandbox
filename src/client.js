@@ -83,6 +83,12 @@ function controlChannel(){
 }
 
 async function initialStates(){
+  /** Global flag that makes every external
+   * library in SANDBOX mode.
+   *
+   * Eg. ExtensionManager.js, <Extension/>, ...
+   */
+  window.SANDBOX = true
   
   GState.set( 'theme', Theme )
   GState

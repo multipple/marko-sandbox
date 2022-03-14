@@ -58,12 +58,12 @@ module.exports = {
       'root': path.resolve(__dirname, '../src'),
       ['~']: path.resolve(__dirname, 'src/views/assets'),
     }
-    // webpackConfig.resolve.fallback = { 
-    //   ...webpackConfig.resolve.fallback,
-    //   assert: require.resolve('assert'),
-    //   stream: require.resolve('stream-browserify'),
-    //   crypto: require.resolve('crypto-browserify')
-    // }
+    webpackConfig.resolve.fallback = { 
+      ...webpackConfig.resolve.fallback,
+      assert: require.resolve('assert'),
+      stream: require.resolve('stream-browserify'),
+      crypto: require.resolve('crypto-browserify')
+    }
 
     webpackConfig.plugins.push(new MiniCssExtractPlugin())
     

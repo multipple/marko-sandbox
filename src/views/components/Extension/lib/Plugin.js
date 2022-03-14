@@ -116,7 +116,7 @@ function Instance( ___, $ ){
      * able to trace directly to this 
      * component
      */
-    component.Plugin.debug = ( message, status ) => this.debug( message, status, component )
+    component.Plugin.debug = ( message, data, status ) => this.debug( message, data, status, component )
 
     return this
   }
@@ -153,12 +153,20 @@ function Instance( ___, $ ){
   this.quit = () => $.Quit()
 
   // Debug mode logs
-  this.debug = ( message, status, component ) => {
-    const
-    { name, version } = $.input,
-    trace = ( component || ___ ).___type.replace( new RegExp(`\/${name}\\$(([0-9]+)\.)+`, 'i'), '')
+  this.debug = ( message, data, status, component ) => {
+    if( !message ) return
 
-    $.Debug( message, status, trace )
+    if( typeof status !== 'string' ){
+      status = 'log'
+      
+      if( ['warning', 'info', 'success', 'danger'].includes( data ) ){
+        status = data
+        data = undefined
+      }
+    }
+
+    const trace = ( component || ___ ).___type.replace( new RegExp(`\/${$.input.name}\\$(([0-9]+)\.)+`, 'i'), '')
+    $.Debug( message, data, status, trace )
   }
 
   // Pass static data to the plugin that can be share with any sub-component that extend it

@@ -1,6 +1,6 @@
 
-import * as Plugin from './Plugin'
-import * as Application from './MicroApp'
+import * as Plugin from './lib/Plugin'
+import * as Application from './lib/Application'
 
 class {
   async onCreate( input ){
@@ -23,7 +23,7 @@ class {
     this.LanguageDictionary = null
     
     GState.bind( this, [ this.nsi, 'tenant', 'user', 'theme', 'workspace', 'screen', 'locale' ] )
-    
+
     this.resolveRoot( input )
     // Load defined language manifest and dictionaries
     await this.loadLanguageManifest() && await this.loadLocaleDictionary( true )
@@ -40,23 +40,37 @@ class {
   }
   
   exactInput( input ){
-    const metaset = input.name && !input.nsi ? 
-                            { ...input, ...( window.Extensions.meta( input.name ) ) } 
+    const metaset = input.name && !input.nsi ?
+                            { ...input, ...( window.Extensions.meta( input.name ) ) }
                             : input
                             
     return metaset && metaset.nsi ? metaset : null
   }
   resolveRoot( input ){
     // Get extension path by account type configuration
-    const 
-    { type, nsi, runscript, version, namespace } = input,
-    accountType = this.state.user.accounttype.toLowerCase()
-    // Path of the component to load as main package: Default is `index.marko`
-    
-    // this.root = runscript
-    //             && ( ( runscript[ accountType ] && runscript[ accountType ].main ) // Main component for specific account type
-    //             || ( runscript['*'] && runscript['*'].main ) ) // Main component for all account
-    this.root = ''
+    const
+    { type, nsi, runscript, version, namespace, core } = input,
+    accountType = this.state.user.accounttype.toUpperCase()
+
+    function entrypointScript(){
+      // Path of the component to load as main package: Default is `index.marko`
+      return runscript
+              && ( ( runscript[ accountType ] && runscript[ accountType ].main ) // Main component for specific account type
+                    || ( runscript['*'] && runscript['*'].main ) ) // Main component for all account
+              || ''
+    }
+
+    /**---------- Sandbox mode ----------**/
+    if( window.SANDBOX )
+      this.root = !!core ?
+              `../plugins/${nsi}~${version}` // Dependency plugin entrypoint
+              : entrypointScript() // Main extension entrypoint
+                              
+    /**---------- Regular mode ----------**/
+    else {
+      const path = entrypointScript()
+      this.root = `${namespace}/${nsi}~${version}/src/${path ? path : ''}`
+    }
   }
   allowedScope( target ){
     
@@ -125,33 +139,57 @@ class {
     }
 
     console.log( error )
-    window.GTrace.throw( error )
     this.state.errmess = error.message
+    
+    window.SANDBOX
+    && window.GTrace 
+    && window.GTrace.throw( error )
   }
 
   Refresh(){ window.Extensions.list[ this.input.name ].refresh() }
   Request( options ){
     return new Promise( ( resolve, reject ) => {
-      window.Request( '/extension/request', 'POST', options )
+      /**---------- Sandbox mode ----------**/
+      if( window.SANDBOX )
+        window.Request( '/extension/request', 'POST', options )
             .then( resolve )
             .catch( error => {
               this.throwError( error )
               reject( error )
             })
+
+      /**---------- Regular mode ----------**/
+      else {
+        const
+        headers = { 'Content-Type': 'application/json' },
+        body = JSON.stringify( options )
+          
+        fetch( '/extension/request', { method: 'POST', headers, body } )
+            .then( response => {
+              if( !response.ok )
+                return reject({ code: response.status, message: response.statusText }) 
+              
+              try { return response.json() }
+              catch( error ){ return response.text() }
+            } )
+            .then( resolve )
+            .catch( reject )
+      }
     } )
   }
   Emit( ...args ){
     this.emit( ...args )
     this.emit('forward', ...args )
-    this.emit('test-event', ...args )
-    
-    console.log('Output Event: ', ...args )
+
+    window.SANDBOX && this.emit('test-event', ...args )
   }
   Debug( message, data, status, trace ){
-    // debugLog( `[${this.input.name}]`, message )
-    // Emit log to emulator
-    const dataset = { name: this.input.name, type: 'debug', message, data, status, trace }
-    window.iof && window.iof.emit( 'console:log', dataset )
+    // Inner extension debug messages
+    window.SANDBOX ?
+          /**---------- Sandbox mode ----------**/
+          window.iof && window.iof.emit( 'console:log', { name: this.input.name, type: 'debug', message, data, status, trace } )
+          /**---------- Regular mode ----------**/
+          : console.log(`[${this.input.name}] ${(status || '').toUpperCase()} DEBUG: ${message}`, data, trace )
   }
   RenderLocale( text ){
     /* Static translation
@@ -165,7 +203,7 @@ class {
     let translation = // Check dictionary provided by the extension
                       ( this.LanguageDictionary && this.LanguageDictionary[ text ] )
                       // Check in global dictionnary: Standard Words/Terms
-                      // || ( this.state.locale && this.state.local.dictionary[ text ] )
+                      || ( !window.SANDBOX && this.state.locale && this.state.local.dictionary[ text ] )
                       // Fallback to original text
                       || text
 
@@ -221,15 +259,15 @@ class {
       // Load defined locale language translation manifest.json file
       this.LanguageManifest = require(`root/${this.root}locales/manifest.json`)
 
-      // Send language manifest to emulator
-      if( window.iof ){
+      // Send language manifest to emulator: Sandbox mode only
+      if( window.SANDBOX && window.iof ){
         window.iof.off('get:languages') // Remove previous listener
         window.iof.on( 'get:languages', fn => typeof fn == 'function' && fn( false, this.LanguageManifest ) )
       }
 
       return true
     }
-    catch( error ){ console.log(error);return false }
+    catch( error ){ return false }
   }
   async loadLocaleDictionary( activate ){
     // Load current locale language's provided Dictionary
@@ -239,7 +277,7 @@ class {
     }
 
     const
-    currentLanguage = this.state.locale || this.state.currentLanguage,
+    currentLanguage = ( window.SANDBOX ? this.state.locale : this.state.locale.language ) || this.state.currentLanguage,
     [ language, variant ] = currentLanguage.split('-')
 
     // Fetch another dictionary
@@ -252,8 +290,6 @@ class {
       this.setState({ errmess: false, currentLanguage })
     }
     catch( error ){ this.throwError( error ) }
-
-    return this.RenderLocale
   }
 }
 

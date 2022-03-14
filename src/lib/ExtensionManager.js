@@ -15,6 +15,14 @@ function isExtension(){
   return true
 }
 
+function getFavicon( dataset ){
+	// Retreive favicon of an extension from marketplace asset server
+	if( !dataset ) return ''
+
+	const { namespace, nsi, version, favicon } = dataset
+	return `${window.marketplace}/${namespace}/${nsi}~${version}/${favicon}`
+}
+
 function runExt( id, payload ){
   const 
   actives = GState.get('activeExtensions'),
@@ -57,10 +65,7 @@ function runExt( id, payload ){
   }
 
   // Add specified operation payload to extension
-  if( payload ){
-    // actives[ id ].payload = payload
-    GState.dirty( id, payload )
-  }
+  if( payload ) GState.dirty( id, payload )
 
   actives[ id ].zindex = maxIndex + 1 // Position targeted view block to the top
   GState.dirty( 'activeExtensions', actives )
@@ -232,6 +237,8 @@ window.Extensions = {
 
   list: {},
 
+  favicon: getFavicon,
+
   run: ( name, payload ) => {
 
     if( !window.Extensions.list.hasOwnProperty( name ) ){
@@ -240,7 +247,7 @@ window.Extensions = {
 
       return false
     }
-
+    
     window.Extensions.list[ name ].run( payload )
     return true
   },
@@ -259,12 +266,12 @@ window.Extensions = {
   },
 
   meta: query => {
-    // Retreive a given extension details by id or name
+    // Retreive a given extension details by id or name or nsi
     for( let id in __EXTS__ )
-      if( query == id
+      if( query == id 
           || __EXTS__[ id ].nsi == query
           || __EXTS__[ id ].name == query )
-        return Object.assign( __EXTS__[ id ], { id } )
+        return Object.assign( {}, __EXTS__[ id ], { id, favicon: getFavicon( __EXTS__[ id ] ) } )
     
     // Extension not found
     let 
@@ -312,10 +319,14 @@ window.Extensions = {
       if( Array.isArray( list ) )
         extension.resource.permissions.scope = list
     }
-
-    /** Assign required plugin dependencies to this extension
+    
+    /** 
+     * Assign required plugin dependencies to this extension
+     * 
+     * NOTE: Regular mode only. Plugin are directly added to
+     *        `config.json` file in sandbox mode
      */
-    extension = await assignDependencies( extension )
+    if( !SANDBOX ) extension = await assignDependencies( extension )
 
     try {
       const { error, message, extensionId } = await window.Request('/extension/install', 'POST', extension )
@@ -394,10 +405,10 @@ window.Extensions = {
   unregister: id => {
     
     if( !__EXTS__[ id ] ) return
-    const { name, version } = __EXTS__[ id ]
+    const { name, nsi, version } = __EXTS__[ id ]
 
     delete __EXTS__[ id ]
-    delete __EXTNS__[`${name}~${version}`]
+    delete __EXTNS__[`${nsi}~${version}`]
     
     // Close auto-loaded application if running
     if( !AutoLoadedExts[ id ] || !window.Extensions.quit( name ) ) return
@@ -447,14 +458,26 @@ export const loadExt = async accountType => {
   if( !isEmpty( list ) )
     list.map( ({ extensionId, ...rest }) => window.Extensions.register({ id: extensionId, ...rest }) )
 
+  // Close all temporary loaded apps
+  Object.keys( uiStore.get( storeAttr +'-tempo') || {} ).map( id => quitExt( id ) )
   // List of auto-loaded extensions
   GState.set('Extensions', AutoLoadedExts )
+
   return AutoLoadedExts
 }
 
 export const getExt = async id => {
   // Get an installed extension info
-  try { return require('root/../config.json') }
+  try {
+    /**---------- Sandbox mode ----------**/
+    if( SANDBOX ) return require('root/../config.json')
+
+    /**---------- Regular mode ----------**/
+    const { error, message, extension } = await window.Request(`/extension/${id}`)
+    if( error ) throw new Error( message )
+
+    return extension
+  }
   catch( error ){
     console.log('Failed Retreiving an Extension: ', error )
     return
@@ -464,11 +487,14 @@ export const getExt = async id => {
 export const fetchExt = async query => {
   // Fetch all installed extension or query a specific category
   try {
-    // const { error, message, extensions, results } = await window.Request(`/extension/${query ? 'search?query='+ query : 'list'}`)
-    // if( error ) throw new Error( message )
+    /**---------- Sandbox mode ----------**/
+    if( SANDBOX ) return []
 
-    // return extensions || results
-    return []
+    /**---------- Regular mode ----------**/
+    const { error, message, extensions, results } = await window.Request(`/extension/${query ? 'search?query='+ query : 'list'}`)
+    if( error ) throw new Error( message )
+
+    return extensions || results
   }
   catch( error ){
     console.log('Failed Fetching Extensions: ', error )

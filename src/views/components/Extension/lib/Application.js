@@ -164,7 +164,7 @@ function Instance( ___, $ ){
     component.App.use([ ...this.deps, ...(deps || []) ])
     // Assign main app data
     component.App.data = ___.App.data
-
+    
     // Automatically bind apps's global state to this extended component
     this.deps.includes('State')
     && component.App.State.bind( component, stateKeys )
@@ -176,7 +176,7 @@ function Instance( ___, $ ){
     component.App.setConfig = this.setConfig
     component.App.getPlugin = this.getPlugin
 
-    /** Overwride debug method to be
+    /** Overwride debug methods to be
      * able to trace directly to this 
      * component
      */
@@ -222,10 +222,7 @@ function Instance( ___, $ ){
       }
     }
 
-    const
-    { name, version } = $.input,
-    trace = ( component || ___ ).___type.replace( new RegExp(`\/${name}\\$(([0-9]+)\.)+`, 'i'), '')
-
+    const trace = ( component || ___ ).___type.replace( new RegExp(`\/${$.input.name}\\$(([0-9]+)\.)+`, 'i'), '')
     $.Debug( message, data, status, trace )
   }
 
