@@ -1,7 +1,7 @@
 
 import './utils'
 import IOF from 'iframe.io'
-import { loadExt } from './lib/ExtensionManager'
+import * as EM from '@multipple/extension-manager'
 import Config from 'root/../config.json'
 import Views from './views'
 
@@ -150,7 +150,7 @@ async function initialStates(){
 
 async function run(){
   // Load installed Extensions
-  await loadExt( accountType )
+  await EM.load( accountType )
   // Render UI Views
   Views.renderSync( Config ).prependTo( document.body )
 
