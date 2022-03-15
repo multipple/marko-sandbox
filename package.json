@@ -10,8 +10,8 @@
     "start:prod": "NODE_ENV=production node build/server.js"
   },
   "dependencies": {
-    "@marko-tags/context": "^2.2.2",
     "@marko/express": "^1.0.0",
+    "@multipple/extension-tag": "^0.0.4",
     "all-localstorage": "^1.0.1",
     "assert": "^2.0.0",
     "boxicons": "^2.1.1",

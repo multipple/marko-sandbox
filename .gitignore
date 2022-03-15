@@ -1,4 +1,5 @@
 node_modules
+plugins
 build
 cache
 *.log

@@ -52,8 +52,11 @@ module.exports = {
     webpackConfig.resolve.extensions = [ ...webpackConfig.resolve.extensions, '.css', '.scss', '.marko' ]
     webpackConfig.resolve.alias = {
       ...webpackConfig.resolve.alias,
-      'extension': path.resolve(__dirname, 'src/views/components/Extension'),
+      // .sandbox
       'themes': path.resolve(__dirname, 'src/views/themes'),
+      'plugins': path.resolve(__dirname, 'plugins'),
+
+      // extension root
       'test': path.resolve(__dirname, '../test'),
       'root': path.resolve(__dirname, '../src'),
       ['~']: path.resolve(__dirname, 'src/views/assets'),
