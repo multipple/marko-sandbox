@@ -1267,10 +1267,10 @@
   resolved "https://registry.yarnpkg.com/@multipple/extension-manager/-/extension-manager-0.0.3.tgz#7e125962ae5fd45597942d10c2f6a1d72061661d"
   integrity sha512-cDKYGFa0k3Htg7gWUjt7inAnKZfokZxvF4dYgY3W72NcIJlDH1dkOQjNDm1C0SIote0jUwYP1J1fe2UQDJREUQ==
 
-"@multipple/extension-tag@^0.0.6":
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/@multipple/extension-tag/-/extension-tag-0.0.6.tgz#22e3524be5731309e2c2e7bd0371a43abd8d69c9"
-  integrity sha512-ZQmEBCN0ui0vxlW0aMDUbQsYjcCSxic/43fantSzRIB6qJhyGxVwF+1T/qgV4VPY/0LRW/Tmm3qSBP+m4d8RJw==
+"@multipple/extension-tag@^0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@multipple/extension-tag/-/extension-tag-0.0.7.tgz#3152d4c05f64239c847a2e907e468b1ad53667fd"
+  integrity sha512-uqZMdIxfS7sevYfsgfntzpndrooFQaAc61zPOIU7QgfAdhpxgAom2qOcs3zzUfpA+5N3qG5ijGmq4wF4kCq8JA==
   dependencies:
     "@marko-tags/context" "^2.2.2"
 
