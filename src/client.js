@@ -19,7 +19,7 @@ userData = {
   ...User,
   // Overwriddens
   accounttype: accountType,
-  language: 'en-US'
+  language: 'fr-FR'
 },
 Theme = {
   name: 'smoothy~1.0',
