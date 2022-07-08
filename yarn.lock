@@ -1267,10 +1267,10 @@
   resolved "https://registry.yarnpkg.com/@multipple/extension-manager/-/extension-manager-0.0.4.tgz#95d563f7876a46096354c1bdcd64df50c023e640"
   integrity sha512-c6bj7P5zWL0TG7LLPGbhZ+2juX5FnoD5pyA6xFxbUqfPhWOMxtzhQZ3u7ivlMX3Thm95S0xY67WU/xCE6MFU0g==
 
-"@multipple/extension-tag@^0.0.14":
-  version "0.0.14"
-  resolved "https://registry.yarnpkg.com/@multipple/extension-tag/-/extension-tag-0.0.14.tgz#cf290ef9c25faf4463905159eb9fec8862085a66"
-  integrity sha512-x+Tyi8clMYMFiDOpz0k2nsmzF0NyOVBpxTswpDGbN8WB3EPrNQNIqVo4So5h3PNVh/fN9kSxhOnk5LMY5s9FeA==
+"@multipple/extension-tag@^0.0.16":
+  version "0.0.16"
+  resolved "https://registry.yarnpkg.com/@multipple/extension-tag/-/extension-tag-0.0.16.tgz#49d13f630965aab3e94281f64f8ce0a04c116e84"
+  integrity sha512-buqkDA1i92XdnSJNguRlta88EGRMr8elv8WVEKJXtS0yQcCEvkF0kJUdV9UGyFp1qHbgZHi+b4GIa+JiLvvFMg==
   dependencies:
     "@marko-tags/context" "^2.2.2"
     socket.io-client "^4.5.1"
