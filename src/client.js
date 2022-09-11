@@ -5,7 +5,7 @@ import * as EM from '@multipple/extension-manager'
 import Config from 'root/../config.json'
 import Views from './views'
 
-import ExtensionConfig from 'root/../config.json'
+import ServiceConfig from 'root/../config.json'
 import Tenant from './data/tenant.json'
 import User from './data/user.json'
 
@@ -27,7 +27,7 @@ Theme = {
   color: 'default'
 }
 
-let extensionId
+let sid
 
 function controlChannel(){
   // Initial connection with content window
@@ -35,7 +35,7 @@ function controlChannel(){
     window.iof = new IOF({ debug: true })
 
     iof.listen()
-    .on( 'signal', code => GState.extension.signal( Config.nsi, code ) )
+    .on( 'signal', code => GState.service.signal( Config.nsi, code ) )
 
     .on( 'theme:change', data => GState.set( 'theme', data ) )
     .on( 'ws:change', data => GState.workspace.layout( data ) )
@@ -68,7 +68,7 @@ function controlChannel(){
         options = { url, method: method || 'GET', body, headers },
         verb = 'api',
         formatResponse = resp => {
-          return isProcess( verb ) ? { error: false, message: 'Extension '+ verb, extensionId: resp } : resp
+          return isProcess( verb ) ? { error: false, message: 'Service '+ verb, sid: resp } : resp
         }
 
         if( url.includes('uninstall') ) verb = 'uninstall' 
@@ -83,10 +83,9 @@ function controlChannel(){
 }
 
 async function initialStates(){
-  /** Global flag that makes every external
-   * library in SANDBOX mode.
-   *
-   * Eg. ExtensionManager.js, <Extension/>, ...
+  /** 
+   * Global flag to put every external
+   * library & features in SANDBOX mode.
    */
   window.SANDBOX = true
   
@@ -106,7 +105,7 @@ async function initialStates(){
   
   /*----------------------------------------------------------------*/
   /* Initial Workspace State: 
-    - Context: Use for extensions & user activities tracking by page
+    - Context: Use for services & user activities tracking by page
                 @params: 
                   - accountType(Admin, Instructor, Learner)
                   - page( route name )
@@ -149,15 +148,15 @@ async function initialStates(){
 }
 
 async function run(){
-  // Load installed Extensions
+  // Load installed Services
   await EM.load( accountType )
   // Render UI Views
   Views.renderSync( Config ).prependTo( document.body )
 
-  // Auto-install & register the extension
-  extensionId = await window.Extensions.install( ExtensionConfig )
-  // The signal <Extension/> to load
-  extensionId && GState.set( 'running', true )
+  // Auto-install & register the service
+  sid = await window.Services.install( ServiceConfig )
+  // The signal <Service/> to load
+  sid && GState.set( 'running', true )
 }
 
 ( async () => {

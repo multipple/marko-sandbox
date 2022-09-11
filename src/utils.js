@@ -46,7 +46,7 @@ TraceKit.remoteFetching = false
 window.GTrace.listen = fn => {
 
   TraceKit.report.subscribe( error => {
-    const relevents = []
+    const relevants = []
 
     for( let x in error.stack ){
       const { line, column, func, url } = error.stack[ x ]
@@ -57,12 +57,12 @@ window.GTrace.listen = fn => {
 
       const 
       comp = filename.replace('.chunk.js', '').split('_'),
-      extension = comp.pop()
+      service = comp.pop()
       
-      relevents.push({ line, column, func, path: `${comp.join('/')}.${extension}` })
+      relevants.push({ line, column, func, path: `${comp.join('/')}.${service}` })
     }
 
-    error.stack = relevents
+    error.stack = relevants
     typeof fn == 'function' && fn( error )
   } )
 }

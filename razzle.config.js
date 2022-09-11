@@ -56,7 +56,7 @@ module.exports = {
       'themes': path.resolve(__dirname, 'src/views/themes'),
       'plugins': path.resolve(__dirname, 'plugins'),
 
-      // extension root
+      // Service root
       'test': path.resolve(__dirname, '../test'),
       'root': path.resolve(__dirname, '../src'),
       ['~']: path.resolve(__dirname, 'src/views/assets'),

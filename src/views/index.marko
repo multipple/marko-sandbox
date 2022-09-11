@@ -13,7 +13,7 @@ import TestManager from './../lib/TestManager'
 
 class {
   onCreate(){
-    this.state = { payload: null }
+    this.state = { argv: null }
     GState.bind(this, ['theme', 'workspace', 'running'])
     
     this.adaptiveThemeType()
@@ -83,8 +83,8 @@ class {
         await tm.load( this.TestManifest[ type ].path )
 
         // Pipe to text manager to get test input as a new run start
-        tm.pipe( payload => this.state.payload = payload )
-        // Get occured output events from extension
+        tm.pipe( argv => this.state.argv = argv )
+        // Get occured output events from service
         this.onOutputEvent = tm.event
 
         // Send loaded test registry back to emulator control
@@ -143,13 +143,17 @@ class {
 <div class=`th--${state.theme.mode} ws--${state.workspace.mode}`>
   <div.vw-100.vh-100.theme-bg.overflow-auto>
     <if( state.running )>
-      <Extension name=input.name 
-                  payload=state.payload
-                  debug
-                  on-test-event( component.onOutputEvent )/>
+      <Service name=input.name 
+                argv=state.argv
+                debug
+                on-test-event( component.onOutputEvent )/>
     </if>
     <else>
-      Installing ...
+      <div.w-100.h-75.d-flex.align-items-center>
+        <div.w-100.text-center>
+          Installing ...
+        </div>
+      </div>
     </else>
   </div>
 </div>
