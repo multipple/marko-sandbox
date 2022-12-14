@@ -1,0 +1,26 @@
+
+$ {
+  const
+  { type, name, description, namespace, nsi, version, favicon } = input,
+  src = window.SANDBOX ? 
+              require('root/../favicon.png')
+              : /\.(png|jpe?g|gif|webp|svg)/.test( favicon ) ?
+                                      /^https?:\/\//.test( favicon ) ? favicon : `${window.marketplace}/${namespace}/${nsi}~${version}/${favicon}` 
+                                      : false,
+  title = input[ input.asTitle ] || name || description
+}
+
+<if( src )>
+  <Image src=src
+          style=`width:${input.width || 60}px`
+          alt=name
+          icon="bx bx-cube-alt"
+          class=input.class
+          title=title
+          noBackground/><br>
+</if>
+<else>
+  <span title=description>
+    <Bx type="extension" class=input.class/>
+  </span>
+</else>

@@ -1,0 +1,45 @@
+
+class {
+  onCreate(){ this.state = { image: null, attrs: {}, loading: false } }
+  onInput({ src, ...attrs }){
+    this.state.attrs = attrs
+    if( !src ) return
+
+    if( window.BlobCache
+        && window.BlobCache.hasOwnProperty( src ) )
+      this.state.image = window.BlobCache[ src ]
+    
+    else {
+      // Remove an updated sources
+      this.state.image = null
+      this.state.loading = true
+
+      window.fetch( corsProxy( src ) )
+            .then( response => response.blob() )
+            .then( blob => {
+              this.state.loading = false
+              if( !blob || !/image\/(.{3,4})|application\/octet-stream/.test( blob.type ) ) return
+
+              this.state.image = URL.createObjectURL( blob )
+              // Cache picture blob
+              if( !window.BlobCache ) window.BlobCache = {}
+              window.BlobCache[ src ] = this.state.image
+            } )
+            .catch( error => {
+              console.log('Failed: '+ error )
+              this.state.loading = false
+            } )
+    }
+  }
+}
+
+<if( state.image )><img ...state.attrs src=state.image draggable="false"/></if>
+<else>
+  <div.image-placeholder.d-inline-flex.align-items-center.justify-content-center
+        class=`${input.class} ${state.loading ? 'animated-placeholder' : ''} ${!input.noBackground ? 'theme-bg-lighten' : ''}` 
+        style=state.attrs.style>
+    <div.w-100.text-center>
+      <i.blue-grey-text.text-lighten-3 class=( input.icon || 'bx bxs-landscape' ) style="font-size:250%"></i>
+    </div>
+  </div>
+</else>

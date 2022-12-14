@@ -10,6 +10,7 @@
     "start:prod": "NODE_ENV=production node build/server.js"
   },
   "dependencies": {
+    "@marko-tags/context": "^2.2.2",
     "@marko/express": "^1.0.0",
     "@multipple/extension-manager": "^0.0.4",
     "@multipple/extension-tag": "^0.0.16",
@@ -32,6 +33,7 @@
     "@marko/webpack": "6.2.9",
     "babel-preset-razzle": "4.1.0",
     "html-webpack-plugin": "^5.3.2",
+    "json-loader": "^0.5.7",
     "mini-css-extract-plugin": "^2.5.3",
     "postcss-loader": "^6.2.1",
     "postcss-normalize": "^10.0.1",

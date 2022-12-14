@@ -1,0 +1,358 @@
+
+import * as Plugin from './lib/Plugin'
+import * as Application from './lib/Application'
+
+class {
+  async onCreate( input ){
+    this.state = {
+      loaded: false, 
+      errmess: false,
+      currentLanguage: window.navigator.language || 'en-US' // Use browser language by default
+    }
+    
+    input = this.exactInput( input )
+    if( !input )
+      return this.throwError( new Error('Undefined service <input>') )
+    
+    this.isDP = !!input.core // Dependency plugin
+    this.sid = input.sid || input.nsi
+    this.root = null
+    this.service = null
+
+    this.Manager = null
+    this.LanguageManifest = null
+    this.LanguageDictionary = null
+    
+    // Available runtime environment global state variables
+    GState.bind( this, [ this.sid, 'tenant', 'user', 'theme', 'workspace', 'screen', 'locale' ] )
+
+    // Define current working path base on the runtime environment
+    this.resolveRoot( input )
+
+    // User language selected/defined by the user
+    if( this.state.user && this.state.user.language )
+      this.state.currentLanguage = this.state.user.language
+      
+    // Load defined language manifest and dictionaries
+    await this.loadLanguageManifest() && await this.loadLocaleDictionary( true )
+
+    // Fetch component module
+    await this.fetchComponent( input )
+  }
+  onInput( input ){
+    if( !window.CUBIC_PROCESS_MANAGER )
+      return this.throwError( new Error('Undefined <window.CUBIC_PROCESS_MANAGER>') )
+
+    this.input = this.exactInput( input )
+  }
+  onMount(){
+    // Load the dictionnary of the new language
+    GState.on( 'locale', async ({ language, variant }) => {
+      if( ( language +'-'+ variant ) === this.state.currentLanguage ) return
+      await this.loadLocaleDictionary()
+    } )
+  }
+  
+  exactInput( input ){
+    this.metadata = input.name && !input.sid ?
+                            { ...input, ...( window.CUBIC_PROCESS_MANAGER.metadata( input.name ) ) }
+                            : input
+
+                            console.log( this.metadata )
+                            
+    return this.metadata && this.metadata.sid ? this.metadata : null
+  }
+  resolveRoot( input ){
+    // Get service path base on its configuration and the runtime environment
+    const
+    { type, nsi, runscript, version, namespace } = input,
+    accountType = this.state.user.accounttype.toUpperCase(),
+    // Path of the component to load as main package: Default is `index.marko`
+    path = runscript
+            && ( ( runscript[ accountType ] && runscript[ accountType ].main ) // Main component for specific account type
+                  || ( runscript['*'] && runscript['*'].main ) ) // Main component for all account
+            || ''
+
+    this.root = window.SANDBOX ?
+                    /**---------- Sandbox mode ----------**/
+                    this.isDP ?
+                        `${nsi}~${version}/src/${path}` // Dependency plugin entrypoint
+                        : path // Main entrypoint
+                        
+                    /**---------- Regular mode ----------**/
+                    : `${namespace}/${nsi}~${version}/src/${path}`
+  }
+  allowedScope( target ){
+    
+    if( !this.input.resource
+        || !this.input.resource.permissions 
+        || !Array.isArray( this.input.resource.permissions.scope )
+        || !this.input.resource.permissions.scope.length ) return {}
+
+    const scopeData = {}
+    let targetData = {}
+
+    switch( target ){
+      case 'user': targetData = this.state.user; break
+      case 'tenant': targetData = this.state.tenant; break
+    }
+
+    function assignValue( link, holder, receiver = {} ){
+      
+      const
+      nsp = link.split('.'),
+      toCheck = nsp.shift()
+
+      /* Receiver requesting all data fields contain in the holder
+      
+        TEMPORARY: Later give a censor list of primary
+                    level of fields that can be assign
+                    in bulk
+      */
+      if( toCheck == '*' ){
+        Object.assign( receiver, holder )
+        return
+      }
+    
+      if( typeof holder == 'object' && !holder.hasOwnProperty( toCheck ) )
+        return false
+    
+      if( typeof holder[ toCheck ] == 'object' && nsp.length ){
+        holder = holder[ toCheck ]
+        receiver[ toCheck ] = {}
+    
+        return assignValue( nsp.join('.'), holder, receiver[ toCheck ] )
+      }
+      
+      receiver[ toCheck ] = holder[ toCheck ]
+    }
+    
+    this.input.resource.permissions.scope.map( ({ type, access }) => {
+      // Assign granted permission data
+      if( type.includes( target ) && access == 'GRANTED' )
+        assignValue( type.replace(/^[a-zA-Z0-9]+\./, ''), targetData, scopeData )
+
+      /* TODO: Collect the list of mandatory permission
+              to re-ask for
+      */
+      // if( access == 'MANDATORY' )
+      //   assignValue( type.replace(/^[a-zA-Z0-9]+\./, ''), targetData, scopeData )
+    } )
+    
+    return scopeData
+  }
+  throwError( error ){
+
+    if( error === false ){
+      this.state.errmess = false
+      return
+    }
+
+    console.log( error )
+    this.state.errmess = error.message
+    
+    window.SANDBOX
+    && window.GTrace 
+    && window.GTrace.throw( error )
+  }
+
+  Refresh(){ window.CUBIC_PROCESS_MANAGER.refresh( this.sid ) }
+  Request( options ){
+    return new Promise( ( resolve, reject ) => {
+      /**---------- Sandbox mode ----------**/
+      if( window.SANDBOX )
+        window.Request( '/service/request', 'POST', options )
+            .then( resolve )
+            .catch( error => {
+              this.throwError( error )
+              reject( error )
+            })
+
+      /**---------- Regular mode ----------**/
+      else {
+        const
+        headers = { 'Content-Type': 'application/json' },
+        body = JSON.stringify( options )
+          
+        fetch( '/service/request', { method: 'POST', headers, body } )
+            .then( response => {
+              if( !response.ok )
+                return reject({ code: response.status, message: response.statusText }) 
+              
+              try { return response.json() }
+              catch( error ){ return response.text() }
+            } )
+            .then( resolve )
+            .catch( reject )
+      }
+    } )
+  }
+  Emit( ...args ){
+    
+    /* FIXME: Temporary fix to the lost of binding
+              callback functions sent from service
+              to mainstream client.
+    */
+    const callback = args.slice(-1)[0]
+    if( callback && typeof callback == 'function' )
+      args[ args.length - 1 ] = function( ...params ){ callback( ...params ) }
+    
+    this.emit( ...args )
+    this.emit('forward', ...args )
+
+    window.SANDBOX && this.emit('test-event', ...args )
+  }
+  Debug( message, data, status, trace ){
+    // Inner service debug messages
+    window.SANDBOX ?
+          /**---------- Sandbox mode ----------**/
+          window.iof && window.iof.emit( 'console:log', { name: this.input.name, type: 'debug', message, data, status, trace } )
+          /**---------- Regular mode ----------**/
+          : console.log(`[${this.input.name}] ${(status || '').toUpperCase()} DEBUG: ${message}`, data, trace )
+  }
+  RenderLocale( text ){
+    /* Static translation
+      {
+        ...
+        "User account": "Compte utilisateur",
+        ...
+      }
+    */
+    const [ language, variant ] = this.state.currentLanguage.split('-')
+    let translation = // Check dictionary provided by the service
+                      ( this.LanguageDictionary && this.LanguageDictionary[ text ] )
+                      // Check in global dictionnary: Standard Words/Terms
+                      || ( !window.SANDBOX && this.state.locale && this.state.local.dictionary[ text ] )
+                      // Fallback to original text
+                      || text
+
+    /* Select defined variance
+      {
+        ...
+        "Buy now": {
+            "US": "Buy now",
+            "UK": "Purchase now",
+            "default": "US"
+        }
+        ...
+      }
+    */
+    if( typeof translation == 'object' ){
+      // Specified variant defined
+      if( variant
+          && translation.hasOwnProperty( variant ) )
+        translation = translation[ variant ]
+
+      // User default define variant
+      else {
+        const defaultVariant = translation['default']
+
+        translation = ( defaultVariant
+                        && translation[ defaultVariant ] )
+                      || text
+      }
+    }
+
+    return translation
+  }
+  Quit(){
+    this.input.type == 'application' && this.destroy() // Auto-close when it's a micro-app
+    this.Emit('quit')
+  }
+  
+  async fetchComponent( input ){
+    try {
+      if( !input )
+        throw new Error('Undefined service <input>')
+        
+      // Fetch Marko template targeting available version
+      this.service = window.SANDBOX && this.isDP ? 
+                                await import(`plugins/${this.root}`)
+                                : await import(`root/${this.root}`)
+
+      // Initialize service manager
+      this.Manager = input.type == 'application' ? new Application.Manager( this ) : new Plugin.Manager( this )
+
+      this.state.loaded = true
+    }
+    catch( error ){ this.throwError( error ) }
+  }
+  async loadLanguageManifest(){
+    try { 
+      // Load defined locale language translation manifest.json file
+      this.LanguageManifest = window.SANDBOX && this.isDP ?
+                                        require(`plugins/${this.root}locales/manifest.json`)
+                                        : require(`root/${this.root}locales/manifest.json`)
+
+      // Send language manifest to emulator: Sandbox mode only
+      if( window.SANDBOX && window.iof ){
+        window.iof.off('get:languages') // Remove previous listener
+        window.iof.on( 'get:languages', fn => typeof fn == 'function' && fn( false, this.LanguageManifest ) )
+      }
+
+      return true
+    }
+    catch( error ){ return false }
+  }
+  async loadLocaleDictionary( activate ){
+    // Load current locale language's provided Dictionary
+    if( !this.LanguageManifest ){
+      activate && this.throwError( new Error('Locale languages manifest not found') )
+      return
+    }
+
+    const
+    currentLanguage = ( window.SANDBOX ? this.state.locale : this.state.locale.language ) || this.state.currentLanguage,
+    [ language, variant ] = currentLanguage.split('-')
+
+    // Fetch another dictionary
+    try {
+      const locale = this.LanguageManifest[ language ]
+      if( !locale )
+        throw new Error(`"${locale || currentLanguage}" language dictionary not found`)
+
+      this.LanguageDictionary = window.SANDBOX && this.isDP ?
+                                          await import(`plugins/${this.root}locales/${locale.dictionary}`)
+                                          : await import(`root/${this.root}locales/${locale.dictionary}`)
+
+      this.setState({ errmess: false, currentLanguage })
+    }
+    catch( error ){ this.throwError( error ) }
+  }
+}
+
+<TryCatch>
+  <if( !state.errmess )>
+    <!-- Service loading stage -->
+    <if( state.loaded === false )>
+      <Loading ...input/>
+    </if>
+    <else-if( component.service )>
+      <!-- Render the service -->
+      <context locale=state.currentLanguage
+                RenderLocale=component.RenderLocale.bind( component )>
+        <${component.service} metadata=newObject( component.metadata )
+                              argv=(state[ component.sid ] || input.argv)
+                              theme=state.theme
+                              screen=state.screen
+                              mode=state.workspace.mode
+                              context=state.workspace.context
+                              user=component.allowedScope('user')
+                              tenant=component.allowedScope('tenant')
+                              Declare=( component.Manager && component.Manager.bind )/>
+      </context>
+    </else-if>
+  </if>
+  <else>
+    <!-- Error encounted when loading service -->
+    <div class="h-100 d-flex align-items-center">
+      <div class="w-100 text-center" key="error-block">
+        <i class="bx bx-error font-large-3" style="color:inherit"></i>
+        <br><br>
+        <p style="padding:0 10%">
+          Oops! ${state.errmess}
+        </p>
+      </div>
+    </div>
+  </else>
+</TryCatch>

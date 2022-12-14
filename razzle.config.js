@@ -43,8 +43,7 @@ module.exports = {
   modifyWebpackOptions( opts ){
     const options = opts.options.webpackOptions
     // Add .marko to exlude
-    options.fileLoaderExclude = [ /\.marko$/, ...options.fileLoaderExclude ]
-    
+    options.fileLoaderExclude = [ /\.marko$/, /\.metadata$/, ...options.fileLoaderExclude ]
     return options
   },
   modifyWebpackConfig({ webpackConfig }){
@@ -74,18 +73,21 @@ module.exports = {
       test: /\.marko$/,
       loader: require.resolve('@marko/webpack/loader')
     })
+    webpackConfig.module.rules.push({
+      test: /\.metadata$/,
+      loader: require.resolve('json-loader')
+    })
     
     webpackConfig.module.rules.push({
-				test: sassRegex,
-				exclude: sassModuleRegex,
-				use: getStyleLoaders({ importLoaders: 2, sourceMap: false }, 'sass-loader' ),
-				sideEffects: true,
-			},
-			{
-				test: sassModuleRegex,
-				use: getStyleLoaders({ importLoaders: 2, sourceMap: false, modules: true, getLocalIdent: getCSSModuleLocalIdent }, 'sass-loader' )
-			}
-		)
+      test: sassRegex,
+      exclude: sassModuleRegex,
+      use: getStyleLoaders({ importLoaders: 2, sourceMap: false }, 'sass-loader' ),
+      sideEffects: true,
+    },
+    {
+      test: sassModuleRegex,
+      use: getStyleLoaders({ importLoaders: 2, sourceMap: false, modules: true, getLocalIdent: getCSSModuleLocalIdent }, 'sass-loader' )
+    })
 
     return webpackConfig
   }

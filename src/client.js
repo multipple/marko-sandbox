@@ -1,11 +1,13 @@
 
 import './utils'
 import IOF from 'iframe.io'
-import * as EM from '@multipple/extension-manager'
-import Config from 'root/../config.json'
+// import * as EM from '@multipple/extension-manager'
 import Views from './views'
 
-import ServiceConfig from 'root/../config.json'
+import LPSClient from './LPSClient'
+import ProcessManager from './ProcessManager'
+import Metadata from 'root/../.metadata'
+
 import Tenant from './data/tenant.json'
 import User from './data/user.json'
 
@@ -27,15 +29,14 @@ Theme = {
   color: 'default'
 }
 
-let sid
-
 function controlChannel(){
   // Initial connection with content window
   return new Promise( ( resolve, reject ) => {
     window.iof = new IOF({ debug: true })
 
-    iof.listen()
-    .on( 'signal', code => GState.service.signal( Config.nsi, code ) )
+    iof
+    .listen()
+    .on( 'signal', code => GState.service.signal( Metadata.nsi, code ) )
 
     .on( 'theme:change', data => GState.set( 'theme', data ) )
     .on( 'ws:change', data => GState.workspace.layout( data ) )
@@ -55,7 +56,7 @@ function controlChannel(){
     
     /*----------------------------------------------------------------*/
     // Report error stack to emulator
-    GTrace.listen( error => iof.emit( 'console:log', { name: Config.name, type: 'error', error, status: 'danger' } ))
+    GTrace.listen( error => iof.emit( 'console:log', { name: Metadata.name, type: 'error', error, status: 'danger' } ))
 
     /*----------------------------------------------------------------*/
     // Forward API request to Emulator
@@ -147,14 +148,53 @@ async function initialStates(){
   } )
 }
 
-async function run(){
-  // Load installed Services
-  await EM.load( accountType )
-  // Render UI Views
-  Views.renderSync( Config ).prependTo( document.body )
+async function preinstall( metadata ){
+  try {
+    const { error, message, sid } = await window.Request('/extension/install', 'POST', metadata )
+    if( error ) throw new Error( message )
+    
+    return sid
+  }
+  catch( error ){ console.log('Error Installing Service: ', error ) }
+}
 
-  // Auto-install & register the service
-  sid = await window.Services.install( ServiceConfig )
+async function start(){
+  // Render UI Views
+  Views.renderSync( Metadata ).prependTo( document.body )
+
+  // Define Process Manager
+  window.CUBIC_PROCESS_MANAGER = new ProcessManager({
+                                                      CPR: {
+                                                        server: '',
+                                                        accessToken: '',
+                                                        scopeToken: ''
+                                                      },
+                                                      LPS: LPSClient,
+                                                      UAT: accountType
+                                                    })
+
+  window.CUBIC_PROCESS_MANAGER
+  .on('alert', ( type, body ) => console.log(`Alert: [${type}] - `, body ) )
+  .on('refresh', ({ loaded, actives }) => {
+    console.log('Loaded: ', loaded )
+    console.log('Actives: ', actives )
+  })
+  .on('permission-request', ({ type, requestor, list }, fn ) => {
+    console.log('Ask Permission: ', type, requestor, list )
+
+    // Grant permissions
+    fn([
+      { type: 'tenant.apps', access: 'GRANTED' },
+      { type: 'user.*', access: 'GRANTED' },
+      { type: 'tenant.*', access: 'GRANTED' }
+    ])
+  })
+
+  // pre-install & register the service
+  const sid = await preinstall( Metadata )
+
+  // Register Services into process manager
+  await window.CUBIC_PROCESS_MANAGER.register({ metadata: { sid, ...Metadata } })
   // The signal <Service/> to load
   sid && GState.set( 'running', true )
 }
@@ -165,8 +205,8 @@ async function run(){
     await initialStates()
     // Sandbox to Emulator control channel
     await controlChannel()
-    // Run sandbox
-    await run()
+    // Start/Run sandbox
+    await start()
   }
   catch( error ){ console.error( error ) }
 } )()
